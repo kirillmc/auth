@@ -31,7 +31,7 @@ func (s *server) Get(ctx context.Context, req *desc.GetRequest) (*desc.GetRespon
 		Id:        req.GetId(),
 		Name:      "AAA",
 		Email:     "AAA",
-		Role:      desc.Role_user,
+		Role:      desc.Role_USER,
 		CreatedAt: timestamppb.New(time.Now()),
 		UpdatedAt: timestamppb.New(time.Now()),
 	}, nil
