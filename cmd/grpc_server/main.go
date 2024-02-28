@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"crypto/sha256"
+	"database/sql"
 	"fmt"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -58,13 +59,44 @@ func (s *server) Create(ctx context.Context, req *desc.CreateRequest) (*desc.Cre
 	}, nil
 }
 func (s *server) Get(ctx context.Context, req *desc.GetRequest) (*desc.GetResponse, error) {
+	var id, role int64
+	var name, email string
+	var createdAt time.Time
+	var updatedAt sql.NullTime
+	builderSelectOne := sq.Select("id", "name", "email", "role", "created_at", "updated_at").
+		From("users").
+		PlaceholderFormat(sq.Dollar).
+		Where(sq.Eq{"id": req.GetId()}).
+		Limit(1)
+
+	query, args, err := builderSelectOne.ToSql()
+	if err != nil {
+		log.Fatalf("failed to build SELECT query: %v", err)
+	}
+	err = s.p.QueryRow(ctx, query, args...).Scan(&id, &name, &email, &role, &createdAt, &updatedAt)
+	if err != nil {
+		log.Fatalf("failed to SELECT user: %v", err)
+	}
+
+	//TODO: Если забуду то вопрос: так нужно делать или можно было просто
+	//TODO: "UpdatedAt:timestamppb.New(updatedAt.Time)" в return сделать?
+	var upTime *timestamppb.Timestamp
+	if updatedAt.Valid {
+		upTime = timestamppb.New(updatedAt.Time)
+	} else {
+		upTime = &timestamppb.Timestamp{
+			Seconds: 0,
+			Nanos:   0,
+		}
+	}
+
 	return &desc.GetResponse{
-		Id:        req.GetId(),
-		Name:      "AAA",
-		Email:     "AAA",
-		Role:      desc.Role_USER,
-		CreatedAt: timestamppb.New(time.Now()),
-		UpdatedAt: timestamppb.New(time.Now()),
+		Id:        id,
+		Name:      name,
+		Email:     email,
+		Role:      desc.Role(role),
+		CreatedAt: timestamppb.New(createdAt),
+		UpdatedAt: upTime,
 	}, nil
 }
 func (s *server) Update(ctx context.Context, req *desc.UpdateRequest) (*emptypb.Empty, error) {
