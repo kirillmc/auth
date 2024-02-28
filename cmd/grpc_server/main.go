@@ -100,7 +100,24 @@ func (s *server) Get(ctx context.Context, req *desc.GetRequest) (*desc.GetRespon
 	}, nil
 }
 func (s *server) Update(ctx context.Context, req *desc.UpdateRequest) (*emptypb.Empty, error) {
-	log.Printf("id of updated user: %d", req.GetId())
+	builderUpdate := sq.Update("users").PlaceholderFormat(sq.Dollar).Set("role", req.Role).Set("updated_at", time.Now()).Where(sq.Eq{"id": req.GetId()})
+	if req.Name != nil {
+		builderUpdate = builderUpdate.Set("name", req.Name.Value)
+	}
+	//builderUpdate.Set("name", req.Name.Value)
+	if req.Email != nil {
+		builderUpdate = builderUpdate.Set("email", req.Email.Value)
+	}
+
+	query, args, err := builderUpdate.ToSql()
+	if err != nil {
+		log.Fatalf("failed to build query: %v", err)
+	}
+
+	_, err = s.p.Exec(ctx, query, args...)
+	if err != nil {
+		log.Fatalf("failed to update user")
+	}
 	return nil, nil
 }
 func (s *server) Delete(ctx context.Context, req *desc.DeleteRequest) (*emptypb.Empty, error) {
