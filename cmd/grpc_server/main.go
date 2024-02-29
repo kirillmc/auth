@@ -4,9 +4,12 @@ import (
 	"context"
 	"crypto/sha256"
 	"database/sql"
+	"flag"
 	"fmt"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/kirillmc/auth/internal/config"
+	"github.com/kirillmc/auth/internal/config/env"
 	desc "github.com/kirillmc/auth/pkg/user_v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -17,25 +20,17 @@ import (
 	"time"
 )
 
-const (
-	grpcPort = 50051
+var configPath string
 
-	// Поработать с конфигом и изменить
-	dbDSN = "host=localhost port=50321 dbname=users user=users-user password=users-password sslmode=disable"
-)
+func init() {
+	flag.StringVar(&configPath, "config-path", ".env", "path to config file")
+}
 
 type server struct {
 	desc.UnimplementedUserV1Server
 	p *pgxpool.Pool
 }
 
-// Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateResponse, error)
-// Name            string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-//
-//	Email           string `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
-//	Password        string `protobuf:"bytes,3,opt,name=password,proto3" json:"password,omitempty"`
-//	PasswordConfirm string `protobuf:"bytes,4,opt,name=password_confirm,json=passwordConfirm,proto3" json:"password_confirm,omitempty"`
-//	Role            Role
 func (s *server) Create(ctx context.Context, req *desc.CreateRequest) (*desc.CreateResponse, error) {
 	buildInsert := sq.Insert("users").
 		PlaceholderFormat(sq.Dollar).
@@ -100,7 +95,11 @@ func (s *server) Get(ctx context.Context, req *desc.GetRequest) (*desc.GetRespon
 	}, nil
 }
 func (s *server) Update(ctx context.Context, req *desc.UpdateRequest) (*emptypb.Empty, error) {
-	builderUpdate := sq.Update("users").PlaceholderFormat(sq.Dollar).Set("role", req.Role).Set("updated_at", time.Now()).Where(sq.Eq{"id": req.GetId()})
+	builderUpdate := sq.Update("users").
+		PlaceholderFormat(sq.Dollar).
+		Set("role", req.Role).
+		Set("updated_at", time.Now()).
+		Where(sq.Eq{"id": req.GetId()})
 	if req.Name != nil {
 		builderUpdate = builderUpdate.Set("name", req.Name.Value)
 	}
@@ -111,7 +110,7 @@ func (s *server) Update(ctx context.Context, req *desc.UpdateRequest) (*emptypb.
 
 	query, args, err := builderUpdate.ToSql()
 	if err != nil {
-		log.Fatalf("failed to build query: %v", err)
+		log.Fatalf("failed to build UPDATE query: %v", err)
 	}
 
 	_, err = s.p.Exec(ctx, query, args...)
@@ -121,21 +120,47 @@ func (s *server) Update(ctx context.Context, req *desc.UpdateRequest) (*emptypb.
 	return nil, nil
 }
 func (s *server) Delete(ctx context.Context, req *desc.DeleteRequest) (*emptypb.Empty, error) {
-	log.Printf("id of deleted user: %d", req.GetId())
+	builderDelete := sq.Delete("users").PlaceholderFormat(sq.Dollar).Where(sq.Eq{"id": req.GetId()})
+	query, args, err := builderDelete.ToSql()
+	if err != nil {
+		log.Fatalf("failed to build DELETE query: %v", err)
+	}
+
+	_, err = s.p.Exec(ctx, query, args...)
+	if err != nil {
+		log.Fatalf("failed to delete user with id %d", req.GetId())
+	}
 	return nil, nil
 }
 
 func main() {
+	flag.Parse()
 	ctx := context.Background()
 
+	//Считываем environment variables
+	err := config.Load(configPath)
+	if err != nil {
+		log.Fatalf("failded to load config: %v", err)
+	}
+
+	grpcConfig, err := env.NewGRPCConfig()
+	if err != nil {
+		log.Fatalf("failed to get grpc config: %v", err)
+	}
+
+	pgConfig, err := env.NewPGConfig()
+	if err != nil {
+		log.Fatalf("failed to get pg config: %v", err)
+	}
+
 	// Создаем пул соединений с базой данных
-	pool, err := pgxpool.Connect(ctx, dbDSN)
+	pool, err := pgxpool.Connect(ctx, pgConfig.DSN())
 	if err != nil {
 		log.Fatalf("failed connect to database: %v", err)
 	}
 	defer pool.Close()
 
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", grpcPort))
+	lis, err := net.Listen("tcp", grpcConfig.Address())
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
