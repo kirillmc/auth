@@ -2,22 +2,18 @@ package main
 
 import (
 	"context"
-	"crypto/sha256"
-	"database/sql"
 	"flag"
-	"fmt"
-	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/kirillmc/auth/internal/config"
 	"github.com/kirillmc/auth/internal/config/env"
+	"github.com/kirillmc/auth/internal/repository"
+	"github.com/kirillmc/auth/internal/repository/user"
 	desc "github.com/kirillmc/auth/pkg/user_v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/types/known/emptypb"
-	"google.golang.org/protobuf/types/known/timestamppb"
 	"log"
 	"net"
-	"time"
 )
 
 var configPath string
@@ -28,108 +24,45 @@ func init() {
 
 type server struct {
 	desc.UnimplementedUserV1Server
-	p *pgxpool.Pool
+	userRepository repository.UserRepository
+	//p              *pgxpool.Pool //TODO: потом удалить
 }
 
 func (s *server) Create(ctx context.Context, req *desc.CreateRequest) (*desc.CreateResponse, error) {
-	buildInsert := sq.Insert("users").
-		PlaceholderFormat(sq.Dollar).
-		Columns("name", "email", "password", "role").
-		Values(req.Name, req.Email, genPassHash(req.Password), req.Role).
-		Suffix("RETURNING id")
-
-	query, args, err := buildInsert.ToSql()
+	id, err := s.userRepository.Create(ctx, req)
 	if err != nil {
-		log.Fatalf("failed to build query: %v", err)
+		return nil, err
 	}
-
-	var userID int64
-	err = s.p.QueryRow(ctx, query, args...).Scan(&userID)
-	if err != nil {
-		log.Fatalf("failed to insert note: %v", err)
-	}
+	log.Printf("insered user with id: %d", id)
 	//pool.QueryRow // считать одну строку
 	return &desc.CreateResponse{
-		Id: userID,
+		Id: id,
 	}, nil
 }
 func (s *server) Get(ctx context.Context, req *desc.GetRequest) (*desc.GetResponse, error) {
-	var id, role int64
-	var name, email string
-	var createdAt time.Time
-	var updatedAt sql.NullTime
-	builderSelectOne := sq.Select("id", "name", "email", "role", "created_at", "updated_at").
-		From("users").
-		PlaceholderFormat(sq.Dollar).
-		Where(sq.Eq{"id": req.GetId()}).
-		Limit(1)
-
-	query, args, err := builderSelectOne.ToSql()
+	nUser, err := s.userRepository.Get(ctx, req.GetId())
 	if err != nil {
-		log.Fatalf("failed to build SELECT query: %v", err)
+		return nil, err
 	}
-	err = s.p.QueryRow(ctx, query, args...).Scan(&id, &name, &email, &role, &createdAt, &updatedAt)
-	if err != nil {
-		log.Fatalf("failed to SELECT user: %v", err)
-	}
-
-	//TODO: Если забуду то вопрос: так нужно делать или можно было просто
-	//TODO: "UpdatedAt:timestamppb.New(updatedAt.Time)" в return сделать?
-	var upTime *timestamppb.Timestamp
-	if updatedAt.Valid {
-		upTime = timestamppb.New(updatedAt.Time)
-	} else {
-		upTime = &timestamppb.Timestamp{
-			Seconds: 0,
-			Nanos:   0,
-		}
-	}
-
-	return &desc.GetResponse{
-		Id:        id,
-		Name:      name,
-		Email:     email,
-		Role:      desc.Role(role),
-		CreatedAt: timestamppb.New(createdAt),
-		UpdatedAt: upTime,
-	}, nil
+	log.Printf("%v %v %v %v %v", nUser.Id, nUser.Name, nUser.Email, nUser.Role, nUser.CreatedAt)
+	return nUser, nil
 }
+
 func (s *server) Update(ctx context.Context, req *desc.UpdateRequest) (*emptypb.Empty, error) {
-	builderUpdate := sq.Update("users").
-		PlaceholderFormat(sq.Dollar).
-		Set("role", req.Role).
-		Set("updated_at", time.Now()).
-		Where(sq.Eq{"id": req.GetId()})
-	if req.Name != nil {
-		builderUpdate = builderUpdate.Set("name", req.Name.Value)
-	}
-	//builderUpdate.Set("name", req.Name.Value)
-	if req.Email != nil {
-		builderUpdate = builderUpdate.Set("email", req.Email.Value)
-	}
-
-	query, args, err := builderUpdate.ToSql()
+	err := s.userRepository.Update(ctx, req)
 	if err != nil {
-		log.Fatalf("failed to build UPDATE query: %v", err)
+		return nil, err
 	}
-
-	_, err = s.p.Exec(ctx, query, args...)
-	if err != nil {
-		log.Fatalf("failed to update user")
-	}
+	log.Printf("User %d updated", req.GetId())
 	return nil, nil
 }
-func (s *server) Delete(ctx context.Context, req *desc.DeleteRequest) (*emptypb.Empty, error) {
-	builderDelete := sq.Delete("users").PlaceholderFormat(sq.Dollar).Where(sq.Eq{"id": req.GetId()})
-	query, args, err := builderDelete.ToSql()
-	if err != nil {
-		log.Fatalf("failed to build DELETE query: %v", err)
-	}
 
-	_, err = s.p.Exec(ctx, query, args...)
+func (s *server) Delete(ctx context.Context, req *desc.DeleteRequest) (*emptypb.Empty, error) {
+	err := s.userRepository.Delete(ctx, req)
 	if err != nil {
-		log.Fatalf("failed to delete user with id %d", req.GetId())
+		return nil, err
 	}
+	log.Printf("User %d was deleted", req.GetId())
 	return nil, nil
 }
 
@@ -160,6 +93,8 @@ func main() {
 	}
 	defer pool.Close()
 
+	userRepo := user.NewRepository(pool)
+
 	lis, err := net.Listen("tcp", grpcConfig.Address())
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
@@ -168,7 +103,7 @@ func main() {
 	s := grpc.NewServer()
 	reflection.Register(s)
 
-	desc.RegisterUserV1Server(s, &server{p: pool})
+	desc.RegisterUserV1Server(s, &server{userRepository: userRepo})
 	log.Printf("server is listening at %v", lis.Addr())
 
 	if err = s.Serve(lis); err != nil {
@@ -176,8 +111,8 @@ func main() {
 	}
 }
 
-func genPassHash(pass string) string {
-	h := sha256.New()
-	h.Write([]byte(pass))
-	return fmt.Sprintf("%x", h.Sum(nil))
-}
+//func genPassHash(pass string) string {
+//	h := sha256.New()
+//	h.Write([]byte(pass))
+//	return fmt.Sprintf("%x", h.Sum(nil))
+//}
