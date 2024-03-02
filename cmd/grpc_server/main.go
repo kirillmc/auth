@@ -4,16 +4,14 @@ import (
 	"context"
 	"flag"
 	"github.com/jackc/pgx/v4/pgxpool"
+	userAPI "github.com/kirillmc/auth/internal/api/user"
 	"github.com/kirillmc/auth/internal/config"
 	"github.com/kirillmc/auth/internal/config/env"
-	"github.com/kirillmc/auth/internal/converter"
 	userRepo "github.com/kirillmc/auth/internal/repository/user"
-	"github.com/kirillmc/auth/internal/service"
 	userService "github.com/kirillmc/auth/internal/service/user"
 	desc "github.com/kirillmc/auth/pkg/user_v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
-	"google.golang.org/protobuf/types/known/emptypb"
 	"log"
 	"net"
 )
@@ -22,50 +20,6 @@ var configPath string
 
 func init() {
 	flag.StringVar(&configPath, "config-path", ".env", "path to config file")
-}
-
-type server struct {
-	desc.UnimplementedUserV1Server
-	userService service.UserService
-	//userRepository repository.UserRepository
-	//p              *pgxpool.Pool //TODO: потом удалить
-}
-
-func (s *server) Create(ctx context.Context, req *desc.CreateRequest) (*desc.CreateResponse, error) {
-	id, err := s.userService.Create(ctx, converter.ToUserModelCreateFromDesc(req))
-	if err != nil {
-		return nil, err
-	}
-	log.Printf("insered user with id: %d", id)
-	//pool.QueryRow // считать одну строку
-	return &desc.CreateResponse{
-		Id: id,
-	}, nil
-}
-func (s *server) Get(ctx context.Context, req *desc.GetRequest) (*desc.GetResponse, error) {
-	nUser, err := s.userService.Get(ctx, req.GetId())
-	if err != nil {
-		return nil, err
-	}
-	log.Printf("%v %v %v %v %v", nUser.Id, nUser.Name, nUser.Email, nUser.Role, nUser.CreatedAt)
-	return converter.ToGetResponseFromService(nUser), nil
-}
-
-func (s *server) Update(ctx context.Context, req *desc.UpdateRequest) (*emptypb.Empty, error) {
-	err := s.userService.Update(ctx, converter.ToUserModelUpdateFromDesc(req))
-	if err != nil {
-		return nil, err
-	}
-	log.Printf("User %d updated", req.GetId())
-	return nil, nil
-}
-func (s *server) Delete(ctx context.Context, req *desc.DeleteRequest) (*emptypb.Empty, error) {
-	err := s.userService.Delete(ctx, req.GetId())
-	if err != nil {
-		return nil, err
-	}
-	log.Printf("User %d was deleted", req.GetId())
-	return nil, nil
 }
 
 func main() {
@@ -106,16 +60,10 @@ func main() {
 	s := grpc.NewServer()
 	reflection.Register(s)
 
-	desc.RegisterUserV1Server(s, &server{userService: userService})
+	desc.RegisterUserV1Server(s, userAPI.NewImplementation(userService))
 	log.Printf("server is listening at %v", lis.Addr())
 
 	if err = s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
 }
-
-//func genPassHash(pass string) string {
-//	h := sha256.New()
-//	h.Write([]byte(pass))
-//	return fmt.Sprintf("%x", h.Sum(nil))
-//}
