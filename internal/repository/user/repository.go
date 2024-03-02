@@ -6,10 +6,10 @@ import (
 	"fmt"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/kirillmc/auth/internal/model"
 	"github.com/kirillmc/auth/internal/repository"
 	"github.com/kirillmc/auth/internal/repository/user/converter"
-	"github.com/kirillmc/auth/internal/repository/user/model"
-	desc "github.com/kirillmc/auth/pkg/user_v1"
+	modelRepo "github.com/kirillmc/auth/internal/repository/user/model"
 	"time"
 )
 
@@ -31,7 +31,7 @@ type repo struct {
 	db *pgxpool.Pool
 }
 
-func (r repo) Create(ctx context.Context, req *desc.CreateRequest) (int64, error) {
+func (r repo) Create(ctx context.Context, req *model.UserToCreate) (int64, error) {
 	builder := sq.Insert(tableName).PlaceholderFormat(sq.Dollar).
 		Columns(nameColumn, emailColumn, passwordColumn, roleColumn).
 		Values(req.Name, req.Email, genPassHash(req.Password), req.Role).
@@ -49,7 +49,7 @@ func (r repo) Create(ctx context.Context, req *desc.CreateRequest) (int64, error
 	return id, nil
 }
 
-func (r repo) Get(ctx context.Context, id int64) (*desc.GetResponse, error) {
+func (r repo) Get(ctx context.Context, id int64) (*model.User, error) {
 	builder := sq.Select(idColumn, nameColumn, emailColumn, roleColumn, createdAtColumn, updatedAtColumn).
 		PlaceholderFormat(sq.Dollar).
 		From(tableName).
@@ -60,7 +60,7 @@ func (r repo) Get(ctx context.Context, id int64) (*desc.GetResponse, error) {
 		return nil, err
 	}
 
-	var user model.User
+	var user modelRepo.User
 	err = r.db.QueryRow(ctx, query, args...).Scan(&user.Id, &user.Name, &user.Email, &user.Role, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
 		return nil, err
@@ -69,12 +69,12 @@ func (r repo) Get(ctx context.Context, id int64) (*desc.GetResponse, error) {
 	return converter.ToUserFromRepo(&user), nil
 }
 
-func (r repo) Update(ctx context.Context, req *desc.UpdateRequest) error {
+func (r repo) Update(ctx context.Context, req *model.UserToUpdate) error {
 	builder := sq.Update(tableName).
 		PlaceholderFormat(sq.Dollar).
 		Set(roleColumn, req.Role).
 		Set(updatedAtColumn, time.Now()).
-		Where(sq.Eq{"id": req.GetId()})
+		Where(sq.Eq{"id": req.Id})
 	if req.Name != nil {
 		builder = builder.Set(nameColumn, req.Name.Value)
 	}
@@ -94,8 +94,8 @@ func (r repo) Update(ctx context.Context, req *desc.UpdateRequest) error {
 	return nil
 }
 
-func (r repo) Delete(ctx context.Context, req *desc.DeleteRequest) error {
-	builder := sq.Delete(tableName).PlaceholderFormat(sq.Dollar).Where(sq.Eq{"id": req.GetId()})
+func (r repo) Delete(ctx context.Context, id int64) error {
+	builder := sq.Delete(tableName).PlaceholderFormat(sq.Dollar).Where(sq.Eq{"id": id})
 	query, args, err := builder.ToSql()
 	if err != nil {
 		return err

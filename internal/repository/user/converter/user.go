@@ -1,23 +1,17 @@
 package converter
 
 import (
-	"github.com/kirillmc/auth/internal/repository/user/model"
-	desc "github.com/kirillmc/auth/pkg/user_v1"
-	"google.golang.org/protobuf/types/known/timestamppb"
+	"github.com/kirillmc/auth/internal/model"
+	modelRepo "github.com/kirillmc/auth/internal/repository/user/model"
 )
 
-func ToUserFromRepo(user *model.User) *desc.GetResponse {
-	var updatedAt *timestamppb.Timestamp
-	if user.UpdatedAt.Valid {
-		updatedAt = timestamppb.New(user.UpdatedAt.Time)
-	}
-
-	return &desc.GetResponse{
+func ToUserFromRepo(user *modelRepo.User) *model.User {
+	return &model.User{
 		Id:        user.Id,
 		Name:      user.Name,
 		Email:     user.Email,
 		Role:      user.Role,
-		CreatedAt: timestamppb.New(user.CreatedAt),
-		UpdatedAt: updatedAt,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
 	}
 }
