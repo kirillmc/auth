@@ -6,18 +6,31 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
+	"log"
+	"net"
+	"time"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
+	"google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/kirillmc/auth/internal/config"
 	"github.com/kirillmc/auth/internal/config/env"
 	desc "github.com/kirillmc/auth/pkg/user_v1"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
-	"google.golang.org/protobuf/types/known/emptypb"
-	"google.golang.org/protobuf/types/known/timestamppb"
-	"log"
-	"net"
-	"time"
+)
+
+const (
+	tableName       = "users"
+	idColumn        = "id"
+	nameColumn      = "name"
+	emailColumn     = "email"
+	passwordColumn  = "password"
+	roleColumn      = "role"
+	createdAtColumn = "created_at"
+	updatedAtColumn = "updated_at"
 )
 
 var configPath string
@@ -32,21 +45,23 @@ type server struct {
 }
 
 func (s *server) Create(ctx context.Context, req *desc.CreateRequest) (*desc.CreateResponse, error) {
-	buildInsert := sq.Insert("users").
+	buildInsert := sq.Insert(tableName).
 		PlaceholderFormat(sq.Dollar).
-		Columns("name", "email", "password", "role").
+		Columns(nameColumn, emailColumn, passwordColumn, roleColumn).
 		Values(req.Name, req.Email, genPassHash(req.Password), req.Role).
 		Suffix("RETURNING id")
 
 	query, args, err := buildInsert.ToSql()
 	if err != nil {
-		log.Fatalf("failed to build query: %v", err)
+		//	log.Fatalf("failed to build query: %v", err)
+		return nil, err
 	}
 
 	var userID int64
 	err = s.p.QueryRow(ctx, query, args...).Scan(&userID)
 	if err != nil {
-		log.Fatalf("failed to insert note: %v", err)
+		//log.Fatalf("failed to insert note: %v", err)
+		return nil, err
 	}
 	//pool.QueryRow // считать одну строку
 	return &desc.CreateResponse{
@@ -58,31 +73,26 @@ func (s *server) Get(ctx context.Context, req *desc.GetRequest) (*desc.GetRespon
 	var name, email string
 	var createdAt time.Time
 	var updatedAt sql.NullTime
-	builderSelectOne := sq.Select("id", "name", "email", "role", "created_at", "updated_at").
-		From("users").
+	builderSelectOne := sq.Select(idColumn, nameColumn, emailColumn, roleColumn, createdAtColumn, updatedAtColumn).
+		From(tableName).
 		PlaceholderFormat(sq.Dollar).
-		Where(sq.Eq{"id": req.GetId()}).
+		Where(sq.Eq{idColumn: req.GetId()}).
 		Limit(1)
 
 	query, args, err := builderSelectOne.ToSql()
 	if err != nil {
-		log.Fatalf("failed to build SELECT query: %v", err)
+		//log.Fatalf("failed to build SELECT query: %v", err)
+		return nil, err
 	}
 	err = s.p.QueryRow(ctx, query, args...).Scan(&id, &name, &email, &role, &createdAt, &updatedAt)
 	if err != nil {
-		log.Fatalf("failed to SELECT user: %v", err)
+		//log.Fatalf("failed to SELECT user: %v", err)
+		return nil, err
 	}
 
-	//TODO: Если забуду то вопрос: так нужно делать или можно было просто
-	//TODO: "UpdatedAt:timestamppb.New(updatedAt.Time)" в return сделать?
 	var upTime *timestamppb.Timestamp
 	if updatedAt.Valid {
 		upTime = timestamppb.New(updatedAt.Time)
-	} else {
-		upTime = &timestamppb.Timestamp{
-			Seconds: 0,
-			Nanos:   0,
-		}
 	}
 
 	return &desc.GetResponse{
@@ -95,40 +105,45 @@ func (s *server) Get(ctx context.Context, req *desc.GetRequest) (*desc.GetRespon
 	}, nil
 }
 func (s *server) Update(ctx context.Context, req *desc.UpdateRequest) (*emptypb.Empty, error) {
-	builderUpdate := sq.Update("users").
+	builderUpdate := sq.Update(tableName).
 		PlaceholderFormat(sq.Dollar).
-		Set("role", req.Role).
-		Set("updated_at", time.Now()).
-		Where(sq.Eq{"id": req.GetId()})
-	if req.Name != nil {
-		builderUpdate = builderUpdate.Set("name", req.Name.Value)
+		Set(updatedAtColumn, time.Now()).
+		Where(sq.Eq{idColumn: req.GetId()})
+	if req.Role != nil {
+		builderUpdate = builderUpdate.Set(roleColumn, req.Role.Value)
 	}
-	//builderUpdate.Set("name", req.Name.Value)
+	if req.Name != nil {
+		builderUpdate = builderUpdate.Set(nameColumn, req.Name.Value)
+	}
 	if req.Email != nil {
-		builderUpdate = builderUpdate.Set("email", req.Email.Value)
+		builderUpdate = builderUpdate.Set(emailColumn, req.Email.Value)
 	}
 
 	query, args, err := builderUpdate.ToSql()
 	if err != nil {
-		log.Fatalf("failed to build UPDATE query: %v", err)
+		//log.Fatalf("failed to build UPDATE query: %v", err)
+		return nil, err
 	}
 
 	_, err = s.p.Exec(ctx, query, args...)
 	if err != nil {
-		log.Fatalf("failed to update user")
+		//log.Fatalf("failed to update user")
+		return nil, err
 	}
 	return nil, nil
 }
 func (s *server) Delete(ctx context.Context, req *desc.DeleteRequest) (*emptypb.Empty, error) {
-	builderDelete := sq.Delete("users").PlaceholderFormat(sq.Dollar).Where(sq.Eq{"id": req.GetId()})
+	builderDelete := sq.Delete(tableName).PlaceholderFormat(sq.Dollar).Where(sq.Eq{idColumn: req.GetId()})
 	query, args, err := builderDelete.ToSql()
 	if err != nil {
-		log.Fatalf("failed to build DELETE query: %v", err)
+		//log.Fatalf("failed to build DELETE query: %v", err)
+		return nil, err
 	}
 
 	_, err = s.p.Exec(ctx, query, args...)
 	if err != nil {
-		log.Fatalf("failed to delete user with id %d", req.GetId())
+		//log.Fatalf("failed to delete user with id %d", req.GetId())
+		return nil, err
 	}
 	return nil, nil
 }
