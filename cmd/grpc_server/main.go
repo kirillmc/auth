@@ -53,14 +53,12 @@ func (s *server) Create(ctx context.Context, req *desc.CreateRequest) (*desc.Cre
 
 	query, args, err := buildInsert.ToSql()
 	if err != nil {
-		//	log.Fatalf("failed to build query: %v", err)
 		return nil, err
 	}
 
 	var userID int64
 	err = s.p.QueryRow(ctx, query, args...).Scan(&userID)
 	if err != nil {
-		//log.Fatalf("failed to insert note: %v", err)
 		return nil, err
 	}
 	//pool.QueryRow // считать одну строку
@@ -81,12 +79,10 @@ func (s *server) Get(ctx context.Context, req *desc.GetRequest) (*desc.GetRespon
 
 	query, args, err := builderSelectOne.ToSql()
 	if err != nil {
-		//log.Fatalf("failed to build SELECT query: %v", err)
 		return nil, err
 	}
 	err = s.p.QueryRow(ctx, query, args...).Scan(&id, &name, &email, &role, &createdAt, &updatedAt)
 	if err != nil {
-		//log.Fatalf("failed to SELECT user: %v", err)
 		return nil, err
 	}
 
@@ -110,7 +106,12 @@ func (s *server) Update(ctx context.Context, req *desc.UpdateRequest) (*emptypb.
 		Set(updatedAtColumn, time.Now()).
 		Where(sq.Eq{idColumn: req.GetId()})
 	if req.Role != nil {
-		builderUpdate = builderUpdate.Set(roleColumn, req.Role.Value)
+		if req.Role.Value == desc.Role_value[desc.Role_USER.String()] || req.Role.Value == desc.Role_value[desc.Role_ADMIN.String()] {
+			builderUpdate = builderUpdate.Set(roleColumn, req.Role.Value)
+		} else {
+			builderUpdate = builderUpdate.Set(roleColumn, desc.Role_UNKNOWN)
+		}
+
 	}
 	if req.Name != nil {
 		builderUpdate = builderUpdate.Set(nameColumn, req.Name.Value)
@@ -121,13 +122,11 @@ func (s *server) Update(ctx context.Context, req *desc.UpdateRequest) (*emptypb.
 
 	query, args, err := builderUpdate.ToSql()
 	if err != nil {
-		//log.Fatalf("failed to build UPDATE query: %v", err)
 		return nil, err
 	}
 
 	_, err = s.p.Exec(ctx, query, args...)
 	if err != nil {
-		//log.Fatalf("failed to update user")
 		return nil, err
 	}
 	return nil, nil
@@ -136,13 +135,11 @@ func (s *server) Delete(ctx context.Context, req *desc.DeleteRequest) (*emptypb.
 	builderDelete := sq.Delete(tableName).PlaceholderFormat(sq.Dollar).Where(sq.Eq{idColumn: req.GetId()})
 	query, args, err := builderDelete.ToSql()
 	if err != nil {
-		//log.Fatalf("failed to build DELETE query: %v", err)
 		return nil, err
 	}
 
 	_, err = s.p.Exec(ctx, query, args...)
 	if err != nil {
-		//log.Fatalf("failed to delete user with id %d", req.GetId())
 		return nil, err
 	}
 	return nil, nil
