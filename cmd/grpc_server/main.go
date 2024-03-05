@@ -105,13 +105,9 @@ func (s *server) Update(ctx context.Context, req *desc.UpdateRequest) (*emptypb.
 		PlaceholderFormat(sq.Dollar).
 		Set(updatedAtColumn, time.Now()).
 		Where(sq.Eq{idColumn: req.GetId()})
-	if req.Role != nil {
-		if req.Role.Value == desc.Role_value[desc.Role_USER.String()] || req.Role.Value == desc.Role_value[desc.Role_ADMIN.String()] {
-			builderUpdate = builderUpdate.Set(roleColumn, req.Role.Value)
-		} else {
-			builderUpdate = builderUpdate.Set(roleColumn, desc.Role_UNKNOWN)
-		}
 
+	if req.Role != desc.Role_UNKNOWN {
+		builderUpdate = builderUpdate.Set(roleColumn, req.Role)
 	}
 	if req.Name != nil {
 		builderUpdate = builderUpdate.Set(nameColumn, req.Name.Value)

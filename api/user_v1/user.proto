@@ -52,7 +52,7 @@ message UpdateRequest{
   int64 id = 1;
   google.protobuf.StringValue name = 2;
   google.protobuf.StringValue email = 3;
-  google.protobuf.Int32Value role = 4;
+  Role role = 4;
 }
 
 message DeleteRequest{
