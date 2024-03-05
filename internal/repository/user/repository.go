@@ -12,6 +12,7 @@ import (
 	"github.com/kirillmc/auth/internal/repository"
 	"github.com/kirillmc/auth/internal/repository/user/converter"
 	modelRepo "github.com/kirillmc/auth/internal/repository/user/model"
+	desc "github.com/kirillmc/auth/pkg/user_v1"
 )
 
 // ТУТ ИМПЛЕМЕНТАЦИЯ МЕТОДОВ
@@ -83,8 +84,8 @@ func (r repo) Update(ctx context.Context, req *model.UserToUpdate) error {
 		builder = builder.Set(emailColumn, req.Email.Value)
 	}
 
-	if req.Role != nil {
-		builder = builder.Set(roleColumn, req.Role.Value)
+	if req.Role != desc.Role_UNKNOWN {
+		builder = builder.Set(roleColumn, req.Role)
 	}
 
 	query, args, err := builder.ToSql()

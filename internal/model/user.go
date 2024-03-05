@@ -29,5 +29,5 @@ type UserToUpdate struct {
 	Id    int64
 	Name  *wrapperspb.StringValue
 	Email *wrapperspb.StringValue
-	Role  *wrapperspb.Int32Value
+	Role  user_v1.Role
 }
