@@ -2,9 +2,11 @@ package model
 
 import (
 	"database/sql"
-	"github.com/kirillmc/auth/pkg/user_v1"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 	"time"
+
+	"google.golang.org/protobuf/types/known/wrapperspb"
+
+	"github.com/kirillmc/auth/pkg/user_v1"
 )
 
 type User struct {
@@ -27,5 +29,5 @@ type UserToUpdate struct {
 	Id    int64
 	Name  *wrapperspb.StringValue
 	Email *wrapperspb.StringValue
-	Role  user_v1.Role
+	Role  *wrapperspb.Int32Value
 }

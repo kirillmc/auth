@@ -4,13 +4,14 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"time"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/kirillmc/auth/internal/model"
 	"github.com/kirillmc/auth/internal/repository"
 	"github.com/kirillmc/auth/internal/repository/user/converter"
 	modelRepo "github.com/kirillmc/auth/internal/repository/user/model"
-	"time"
 )
 
 // ТУТ ИМПЛЕМЕНТАЦИЯ МЕТОДОВ
@@ -53,7 +54,7 @@ func (r repo) Get(ctx context.Context, id int64) (*model.User, error) {
 	builder := sq.Select(idColumn, nameColumn, emailColumn, roleColumn, createdAtColumn, updatedAtColumn).
 		PlaceholderFormat(sq.Dollar).
 		From(tableName).
-		Where(sq.Eq{"id": id}).
+		Where(sq.Eq{idColumn: id}).
 		Limit(1)
 	query, args, err := builder.ToSql()
 	if err != nil {
@@ -72,15 +73,18 @@ func (r repo) Get(ctx context.Context, id int64) (*model.User, error) {
 func (r repo) Update(ctx context.Context, req *model.UserToUpdate) error {
 	builder := sq.Update(tableName).
 		PlaceholderFormat(sq.Dollar).
-		Set(roleColumn, req.Role).
 		Set(updatedAtColumn, time.Now()).
-		Where(sq.Eq{"id": req.Id})
+		Where(sq.Eq{idColumn: req.Id})
 	if req.Name != nil {
 		builder = builder.Set(nameColumn, req.Name.Value)
 	}
 
 	if req.Email != nil {
 		builder = builder.Set(emailColumn, req.Email.Value)
+	}
+
+	if req.Role != nil {
+		builder = builder.Set(roleColumn, req.Role.Value)
 	}
 
 	query, args, err := builder.ToSql()
