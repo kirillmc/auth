@@ -2,8 +2,11 @@ package app
 
 import (
 	"context"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"log"
+
 	"github.com/kirillmc/auth/internal/api/user"
+	"github.com/kirillmc/auth/internal/client/db"
+	"github.com/kirillmc/auth/internal/client/db/pg"
 	"github.com/kirillmc/auth/internal/closer"
 	"github.com/kirillmc/auth/internal/config"
 	"github.com/kirillmc/auth/internal/config/env"
@@ -11,7 +14,6 @@ import (
 	userRepo "github.com/kirillmc/auth/internal/repository/user"
 	"github.com/kirillmc/auth/internal/service"
 	userService "github.com/kirillmc/auth/internal/service/user"
-	"log"
 )
 
 // содержит все зависимости, необходимые в рамках приложения
@@ -19,7 +21,7 @@ type serviceProvider struct {
 	pgConfig   config.PGConfig
 	grpcConfig config.GRPCConfig
 
-	pgPool *pgxpool.Pool
+	dbClient db.Client
 
 	userRepository repository.UserRepository
 	userService    service.UserService
@@ -56,14 +58,14 @@ func (s *serviceProvider) GRPCConfig() config.GRPCConfig {
 	return s.grpcConfig
 }
 
-func (s *serviceProvider) PgPool(ctx context.Context) *pgxpool.Pool {
-	if s.pgPool == nil {
-		pool, err := pgxpool.Connect(ctx, s.PGConfig().DSN()) // получется каскадная инициализация
+func (s *serviceProvider) PgPool(ctx context.Context) db.Client {
+	if s.dbClient == nil {
+		cl, err := pg.New(ctx, s.PGConfig().DSN()) // получется каскадная инициализация
 		if err != nil {
 			log.Fatalf("failed to connect to database: %v", err)
 		}
 
-		err = pool.Ping(ctx) // проверяем доступность, пингуя
+		err = cl.DB().Ping(ctx) // проверяем доступность, пингуя
 		if err != nil {
 			log.Fatalf("ping error: %v", err)
 		}
@@ -71,14 +73,10 @@ func (s *serviceProvider) PgPool(ctx context.Context) *pgxpool.Pool {
 		// defer pgPool.Close - не отработает как в main, т.к. функция закончися почти сразу,
 		// Поэтому:
 		// Для закрытия реализуем closer - сущность, которая копит функции закрытия каких-либо ресурсов и вызывается в конце
-		closer.Add(func() error { // т.к. метод Close у pool не возвращает ошибку - добавлена обертка,
-			// возворащающая в качестве ошибки nil
-			pool.Close()
-			return nil
-		})
-		s.pgPool = pool
+		closer.Add(cl.Close)
+		s.dbClient = cl
 	}
-	return s.pgPool
+	return s.dbClient
 }
 
 func (s *serviceProvider) UserRepository(ctx context.Context) repository.UserRepository {

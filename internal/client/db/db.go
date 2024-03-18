@@ -21,6 +21,19 @@ type Query struct {
 	QueryRaw string
 }
 
+// Handler - функция, которая выполняется в транзакции
+type Handler func(ctx context.Context) error
+
+// TxManager - менеджер транзакций, который выполняет указанный пользователем обработчик в транзакции
+type TxManager interface {
+	ReadCommitted(ctx context.Context, f Handler) error
+}
+
+// Transactor - интерфейс для работы с транзакциями
+type Transactor interface {
+	BeginTx(ctx context.Context, txOptions pgx.TxOptions) (pgx.Tx, error)
+}
+
 // SQLExecer -  комбинирует NamedExecer и QueryExecer
 type SQLExecer interface {
 	NamedExecer
