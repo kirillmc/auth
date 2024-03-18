@@ -76,7 +76,13 @@ func (p *pg) QueryRowContext(ctx context.Context, q db.Query, args ...interface{
 	return p.dbc.QueryRow(ctx, q.QueryRaw, args...)
 }
 
-func MakaContext
+func MakeContextTx(ctx context.Context, tx pgx.Tx) context.Context {
+	return context.WithValue(ctx, TxKey, tx)
+}
+
+func (p *pg) BeginTx(ctx context.Context, txOptions pgx.TxOptions) (pgx.Tx, error) {
+	return p.dbc.BeginTx(ctx, txOptions)
+}
 
 func (p *pg) Ping(ctx context.Context) error {
 	return p.dbc.Ping(ctx)

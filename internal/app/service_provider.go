@@ -7,6 +7,7 @@ import (
 	"github.com/kirillmc/auth/internal/api/user"
 	"github.com/kirillmc/auth/internal/client/db"
 	"github.com/kirillmc/auth/internal/client/db/pg"
+	"github.com/kirillmc/auth/internal/client/db/transaction"
 	"github.com/kirillmc/auth/internal/closer"
 	"github.com/kirillmc/auth/internal/config"
 	"github.com/kirillmc/auth/internal/config/env"
@@ -21,7 +22,8 @@ type serviceProvider struct {
 	pgConfig   config.PGConfig
 	grpcConfig config.GRPCConfig
 
-	dbClient db.Client
+	dbClient  db.Client
+	txManager db.TxManager
 
 	userRepository repository.UserRepository
 	userService    service.UserService
@@ -58,6 +60,22 @@ func (s *serviceProvider) GRPCConfig() config.GRPCConfig {
 	return s.grpcConfig
 }
 
+func (s *serviceProvider) DBClient(ctx context.Context) db.Client {
+	if s.dbClient == nil {
+		cl, err := pg.New(ctx, s.PGConfig().DSN())
+		if err != nil {
+			log.Fatalf("faailed to create db client: %v", err)
+		}
+		err = cl.DB().Ping(ctx)
+		if err != nil {
+			log.Fatalf("ping error: %s", err.Error())
+		}
+		closer.Add(cl.Close)
+		s.dbClient = cl
+	}
+	return s.dbClient
+}
+
 func (s *serviceProvider) PgPool(ctx context.Context) db.Client {
 	if s.dbClient == nil {
 		cl, err := pg.New(ctx, s.PGConfig().DSN()) // получется каскадная инициализация
@@ -79,6 +97,14 @@ func (s *serviceProvider) PgPool(ctx context.Context) db.Client {
 	return s.dbClient
 }
 
+func (s *serviceProvider) TxManager(ctx context.Context) db.TxManager {
+	if s.txManager == nil {
+		s.txManager = transaction.NewTransactionManager(s.DBClient(ctx).DB())
+	}
+
+	return s.txManager
+}
+
 func (s *serviceProvider) UserRepository(ctx context.Context) repository.UserRepository {
 	if s.userRepository == nil {
 		s.userRepository = userRepo.NewRepository(s.PgPool(ctx))
@@ -88,7 +114,7 @@ func (s *serviceProvider) UserRepository(ctx context.Context) repository.UserRep
 
 func (s *serviceProvider) UserService(ctx context.Context) service.UserService {
 	if s.userService == nil {
-		s.userService = userService.NewService(s.UserRepository(ctx))
+		s.userService = userService.NewService(s.UserRepository(ctx), s.TxManager(ctx))
 	}
 	return s.userService
 }

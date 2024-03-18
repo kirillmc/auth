@@ -61,6 +61,7 @@ type Pinger interface {
 // DB - композиция интерфейсов - интерфейс для работы с БД
 type DB interface {
 	SQLExecer
+	Transactor
 	Pinger
 	Close()
 }
