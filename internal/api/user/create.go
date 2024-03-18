@@ -2,9 +2,10 @@ package user
 
 import (
 	"context"
+	"log"
+
 	"github.com/kirillmc/auth/internal/converter"
 	desc "github.com/kirillmc/auth/pkg/user_v1"
-	"log"
 )
 
 func (i *Implementation) Create(ctx context.Context, req *desc.CreateRequest) (*desc.CreateResponse, error) {
@@ -12,7 +13,7 @@ func (i *Implementation) Create(ctx context.Context, req *desc.CreateRequest) (*
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("insered user with id: %d", id)
+	log.Printf("inserted user with id: %d", id)
 	//pool.QueryRow // считать одну строку
 	return &desc.CreateResponse{
 		Id: id,

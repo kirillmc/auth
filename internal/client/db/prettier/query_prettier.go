@@ -1,6 +1,10 @@
 package prettier
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+	"strings"
+)
 
 const (
 	PlaceholderDollar   = "$"
@@ -8,11 +12,23 @@ const (
 )
 
 func Pretty(query string, placeholder string, args ...any) string {
+
 	for i, param := range args {
 		var value string
 		switch v := param.(type) {
 		case string:
-			valuse := fmt.Sprintf("")
+			value = fmt.Sprintf("%q", v)
+		case []byte:
+			value = fmt.Sprintf("%q", string(v))
+		default:
+			value = fmt.Sprintf("%v", v)
 		}
+
+		query = strings.Replace(query, fmt.Sprintf("%s%s", placeholder, strconv.Itoa(i+1)), value, -1)
 	}
+
+	query = strings.ReplaceAll(query, "\t", "")
+	query = strings.ReplaceAll(query, "\n", " ")
+
+	return strings.TrimSpace(query)
 }
