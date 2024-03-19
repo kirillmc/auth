@@ -1,19 +1,11 @@
 package converter
 
 import (
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	"github.com/kirillmc/auth/internal/model"
 	desc "github.com/kirillmc/auth/pkg/user_v1"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
-
-func ToCreateRequestFromService(user *model.UserToCreate) *desc.CreateRequest {
-	return &desc.CreateRequest{
-		Name:     user.Name,
-		Email:    user.Email,
-		Password: user.Password,
-		Role:     user.Role,
-	}
-}
 
 func ToGetResponseFromService(user *model.User) *desc.GetResponse {
 	var updatedAt *timestamppb.Timestamp

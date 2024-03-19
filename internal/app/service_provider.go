@@ -42,8 +42,10 @@ func (s *serviceProvider) PGConfig() config.PGConfig {
 			// + инициализация происходит при старте приложения, поэтому если ошибка - можно и сервер уронить
 			// можно кинуть panic()
 		}
+
 		s.pgConfig = pgConfig
 	}
+
 	return s.pgConfig
 }
 
@@ -53,8 +55,10 @@ func (s *serviceProvider) GRPCConfig() config.GRPCConfig {
 		if err != nil {
 			log.Fatalf("failed to get grpc config: %v", err)
 		}
+
 		s.grpcConfig = grpcConfig
 	}
+
 	return s.grpcConfig
 }
 
@@ -73,6 +77,7 @@ func (s *serviceProvider) DBClient(ctx context.Context) db.Client {
 		closer.Add(cl.Close)
 		s.dbClient = cl
 	}
+
 	return s.dbClient
 }
 
@@ -80,6 +85,7 @@ func (s *serviceProvider) UserRepository(ctx context.Context) repository.UserRep
 	if s.userRepository == nil {
 		s.userRepository = userRepo.NewRepository(s.DBClient(ctx))
 	}
+
 	return s.userRepository
 }
 
@@ -87,6 +93,7 @@ func (s *serviceProvider) UserService(ctx context.Context) service.UserService {
 	if s.userService == nil {
 		s.userService = userService.NewService(s.UserRepository(ctx))
 	}
+
 	return s.userService
 }
 
@@ -94,5 +101,6 @@ func (s *serviceProvider) UserImplementation(ctx context.Context) *user.Implemen
 	if s.userImpl == nil {
 		s.userImpl = user.NewImplementation(s.UserService(ctx))
 	}
+
 	return s.userImpl
 }

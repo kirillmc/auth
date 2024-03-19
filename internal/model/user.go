@@ -22,12 +22,20 @@ type UserToCreate struct {
 	Name     string
 	Email    string
 	Password string
-	Role     user_v1.Role
+	Role     Role
 }
 
 type UserToUpdate struct {
 	Id    int64
 	Name  *wrapperspb.StringValue
 	Email *wrapperspb.StringValue
-	Role  user_v1.Role
+	Role  Role
 }
+
+type Role int32
+
+const (
+	Role_UNKNOWN Role = 0
+	Role_USER    Role = 1
+	Role_ADMIN   Role = 2
+)
