@@ -5,15 +5,13 @@ import (
 	"time"
 
 	"google.golang.org/protobuf/types/known/wrapperspb"
-
-	"github.com/kirillmc/auth/pkg/user_v1"
 )
 
 type User struct {
 	Id        int64
 	Name      string
 	Email     string
-	Role      user_v1.Role
+	Role      Role
 	CreatedAt time.Time
 	UpdatedAt sql.NullTime
 }

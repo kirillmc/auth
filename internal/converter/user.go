@@ -17,7 +17,7 @@ func ToGetResponseFromService(user *model.User) *desc.GetResponse {
 		Id:        user.Id,
 		Name:      user.Name,
 		Email:     user.Email,
-		Role:      user.Role,
+		Role:      desc.Role(user.Role),
 		CreatedAt: timestamppb.New(user.CreatedAt),
 		UpdatedAt: updatedAt,
 	}
@@ -27,7 +27,7 @@ func ToUserModelCreateFromDesc(user *desc.CreateRequest) *model.UserToCreate {
 	return &model.UserToCreate{
 		Name:     user.Name,
 		Email:    user.Email,
-		Role:     user.Role,
+		Role:     model.Role(user.Role),
 		Password: user.Password,
 	}
 }
@@ -37,6 +37,6 @@ func ToUserModelUpdateFromDesc(user *desc.UpdateRequest) *model.UserToUpdate {
 		Id:    user.Id,
 		Name:  user.Name,
 		Email: user.Email,
-		Role:  user.Role,
+		Role:  model.Role(user.Role),
 	}
 }
