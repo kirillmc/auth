@@ -106,7 +106,7 @@ func (r repo) Update(ctx context.Context, req *model.UserToUpdate) error {
 		builder = builder.Set(emailColumn, req.Email.Value)
 	}
 
-	if req.Role != model.Role_UNKNOWN {
+	if req.Role != model.RoleUnknown {
 		builder = builder.Set(roleColumn, req.Role)
 	}
 

@@ -33,7 +33,7 @@ type UserToUpdate struct {
 type Role int32
 
 const (
-	Role_UNKNOWN Role = 0
-	Role_USER    Role = 1
-	Role_ADMIN   Role = 2
+	RoleUnknown Role = 0
+	RoleUser    Role = 1
+	RoleAdmin   Role = 2
 )
