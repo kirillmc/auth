@@ -2,8 +2,9 @@ package env
 
 import (
 	"errors"
-	"github.com/kirillmc/auth/internal/config"
 	"os"
+
+	"github.com/kirillmc/auth/internal/config"
 )
 
 const (
