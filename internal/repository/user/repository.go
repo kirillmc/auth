@@ -7,11 +7,11 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/kirillmc/auth/internal/client/db"
 	"github.com/kirillmc/auth/internal/model"
 	"github.com/kirillmc/auth/internal/repository"
 	"github.com/kirillmc/auth/internal/repository/user/converter"
 	modelRepo "github.com/kirillmc/auth/internal/repository/user/model"
+	"github.com/kirillmc/platform_common/pkg/db"
 )
 
 // ТУТ ИМПЛЕМЕНТАЦИЯ МЕТОДОВ

@@ -5,15 +5,15 @@ import (
 	"log"
 
 	"github.com/kirillmc/auth/internal/api/user"
-	"github.com/kirillmc/auth/internal/client/db"
-	"github.com/kirillmc/auth/internal/client/db/pg"
-	"github.com/kirillmc/auth/internal/closer"
 	"github.com/kirillmc/auth/internal/config"
 	"github.com/kirillmc/auth/internal/config/env"
 	"github.com/kirillmc/auth/internal/repository"
 	userRepo "github.com/kirillmc/auth/internal/repository/user"
 	"github.com/kirillmc/auth/internal/service"
 	userService "github.com/kirillmc/auth/internal/service/user"
+	"github.com/kirillmc/platform_common/pkg/closer"
+	"github.com/kirillmc/platform_common/pkg/db"
+	"github.com/kirillmc/platform_common/pkg/db/pg"
 )
 
 // содержит все зависимости, необходимые в рамках приложения
