@@ -51,8 +51,7 @@ func TestDelete(t *testing.T) {
 				ctx: ctx,
 				req: req,
 			},
-			want: nil,
-			err:  nil,
+			err: nil,
 			userServiceMock: func(mc *minimock.Controller) service.UserService {
 				mock := serviceMocks.NewUserServiceMock(mc)
 				mock.DeleteMock.Expect(ctx, id).Return(nil)
@@ -65,8 +64,7 @@ func TestDelete(t *testing.T) {
 				ctx: ctx,
 				req: req,
 			},
-			want: nil,
-			err:  serviceError,
+			err: serviceError,
 			userServiceMock: func(mc *minimock.Controller) service.UserService {
 				mock := serviceMocks.NewUserServiceMock(mc)
 				mock.DeleteMock.Expect(ctx, id).Return(serviceError)
@@ -83,9 +81,8 @@ func TestDelete(t *testing.T) {
 			userServiceMock := tt.userServiceMock(mc)
 			api := user.NewImplementation(userServiceMock)
 
-			res, err := api.Delete(tt.args.ctx, tt.args.req)
+			_, err := api.Delete(tt.args.ctx, tt.args.req)
 			require.Equal(t, tt.err, err)
-			require.Equal(t, tt.want, res) //TODO: есть ли смысл? Ведь всегда ожидается nil
 		})
 	}
 }

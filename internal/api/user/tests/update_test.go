@@ -74,8 +74,7 @@ func TestUpdate(t *testing.T) {
 				ctx: ctx,
 				req: req,
 			},
-			want: nil,
-			err:  nil,
+			err: nil,
 			userServiceMock: func(mc *minimock.Controller) service.UserService {
 				mock := serviceMocks.NewUserServiceMock(mc)
 				mock.UpdateMock.Expect(ctx, modelUserToUpdate).Return(nil)
@@ -88,8 +87,7 @@ func TestUpdate(t *testing.T) {
 				ctx: ctx,
 				req: req,
 			},
-			want: nil,
-			err:  serviceErr,
+			err: serviceErr,
 			userServiceMock: func(mc *minimock.Controller) service.UserService {
 				mock := serviceMocks.NewUserServiceMock(mc)
 				mock.UpdateMock.Expect(ctx, modelUserToUpdate).Return(serviceErr)
@@ -106,10 +104,9 @@ func TestUpdate(t *testing.T) {
 			userServiceMock := tt.userServiceMock(mc)
 			api := user.NewImplementation(userServiceMock)
 
-			res, err := api.Update(ctx, req)
+			_, err := api.Update(ctx, req)
 
 			require.Equal(t, tt.err, err)
-			require.Equal(t, tt.want, res)
 
 		})
 

@@ -32,9 +32,8 @@ func TestDelete(t *testing.T) {
 	)
 
 	tests := []struct {
-		name string
-		args args
-		// TODO: тут же want не надо?
+		name               string
+		args               args
 		err                error
 		userRepositoryMock userRepositoryMockFunc
 	}{
