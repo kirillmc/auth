@@ -29,19 +29,49 @@ generate-user-api:
 	mkdir -p pkg/user_v1
 	protoc --proto_path api/user_v1 \
 	--go_out=pkg/user_v1 --go_opt=paths=source_relative \
-	--plugin=protoc-gen-go=$(LOCAL_BIN)/protoc-gen-go.exe \
+	--plugin=protoc-gen-go=$(LOCAL_BIN)/protoc-gen-go \
 	--go-grpc_out=pkg/user_v1 --go-grpc_opt=paths=source_relative \
-	--plugin=protoc-gen-go-grpc=$(LOCAL_BIN)/protoc-gen-go-grpc.exe \
+	--plugin=protoc-gen-go-grpc=$(LOCAL_BIN)/protoc-gen-go-grpc \
 	api/user_v1/user.proto
 
 local-migration-status:
-	$(LOCAL_BIN)/goose.exe -dir ${LOCAL_MIGRATION_DIR} postgres ${LOCAL_MIGRATION_DSN} status -v
+	$(LOCAL_BIN)/goose -dir ${LOCAL_MIGRATION_DIR} postgres ${LOCAL_MIGRATION_DSN} status -v
 
 create-migration:
-	$(LOCAL_BIN)/goose.exe -dir ${LOCAL_MIGRATION_DIR}  create make users_table sql
+	$(LOCAL_BIN)/goose -dir ${LOCAL_MIGRATION_DIR}  create make users_table sql
 
 local-migration-up:
-	$(LOCAL_BIN)/goose.exe -dir ${LOCAL_MIGRATION_DIR} postgres ${LOCAL_MIGRATION_DSN} up -v
+	$(LOCAL_BIN)/goose -dir ${LOCAL_MIGRATION_DIR} postgres ${LOCAL_MIGRATION_DSN} up -v
 
 local-migration-down:
-	$(LOCAL_BIN)/goose.exe -dir ${LOCAL_MIGRATION_DIR} postgres ${LOCAL_MIGRATION_DSN} down -v
+	$(LOCAL_BIN)/goose -dir ${LOCAL_MIGRATION_DIR} postgres ${LOCAL_MIGRATION_DSN} down -v
+
+test:
+	go clean -testcache
+	go test ./... -covermode count -coverpkg=github.com/kirillmc/auth/internal/service/...,github.com/kirillmc/auth/internal/api/... -count 5
+
+test-coverage:
+	go clean -testcache
+	go test ./... -coverprofile=coverage.tmp.out -covermode count -coverpkg=github.com/kirillmc/auth/internal/service/...,github.com/kirillmc/auth/internal/api/...
+	grep -v 'mocks\|config' coverage.tmp.out  > coverage.out
+	rm coverage.tmp.out
+	go tool cover -html=coverage.out;
+	go tool cover -func=./coverage.out | grep "total";
+	grep -sqFx "/coverage.out" .gitignore || echo "/coverage.out" >> .gitignore
+
+create_mocks:
+	go generate ./...
+
+test:
+	go clean -testcache
+	go test ./... -covermode count -coverpkg=github.com/kirillmc/auth/internal/service/...,github.com/kirillmc/auth/internal/api/...
+
+
+test_coverage:
+	go clean -testcache
+	go test ./... -coverprofile=coverage.tmp.out -covermode count -coverpkg=github.com/kirillmc/auth/internal/service/...,github.com/kirillmc/auth/internal/api/... -count 5
+	grep -v 'mocks\|config' coverage.tmp.out  > coverage.out
+	rm coverage.tmp.out
+	go tool cover -html=coverage.out;
+	go tool cover -func=./coverage.out | grep "total";
+	grep -sqFx "/coverage.out" .gitignore || echo "/coverage.out" >> .gitignore
