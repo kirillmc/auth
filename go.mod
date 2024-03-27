@@ -1,6 +1,6 @@
 module github.com/kirillmc/auth
 
-go 1.22.1
+go 1.21.8
 
 require (
 	github.com/Masterminds/squirrel v1.5.4

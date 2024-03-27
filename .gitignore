@@ -1,4 +1,6 @@
 .idea
 /bin/
-.env/coverage.out
 .env
+.env/coverage.out
+.env/coverage.out/coverage.out
+/coverage.out
