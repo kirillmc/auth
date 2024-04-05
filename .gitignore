@@ -5,3 +5,4 @@
 .env/coverage.out/coverage.out
 /coverage.out
 /vendor.protogen/
+/tls/
