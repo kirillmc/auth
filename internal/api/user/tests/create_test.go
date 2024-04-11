@@ -37,7 +37,7 @@ func TestCreate(t *testing.T) {
 		serviceErr = fmt.Errorf("error of service layer")
 
 		req = &desc.CreateRequest{
-			Name:     name,
+			Username: name,
 			Email:    email,
 			Password: password,
 			Role:     desc.Role(role),
