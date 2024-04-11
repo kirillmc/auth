@@ -46,7 +46,7 @@ func TestGet(t *testing.T) {
 
 		serviceRes = &model.User{
 			Id:        id,
-			Name:      name,
+			Username:  name,
 			Email:     email,
 			Role:      model.Role(role),
 			CreatedAt: createdAt,
@@ -58,7 +58,7 @@ func TestGet(t *testing.T) {
 
 		res = &desc.GetResponse{
 			Id:        id,
-			Name:      name,
+			Username:  name,
 			Email:     email,
 			Role:      desc.Role(role),
 			CreatedAt: timestamppb.New(createdAt),

@@ -29,6 +29,8 @@ get-deps:
 generate:
 	mkdir -p pkg/swagger
 	make generate-user-api
+	make generate-auth-api
+	make generate-access-api
 	$(LOCAL_BIN)/statik -src=pkg/swagger/ -include='*.css,*.html,*.js,*.json,*.png'
 
 generate-user-api:
@@ -45,6 +47,24 @@ generate-user-api:
     --openapiv2_out=allow_merge=true,merge_file_name=api:pkg/swagger \
     --plugin=protoc-gen-openapiv2=$(LOCAL_BIN)/protoc-gen-openapiv2 \
 	api/user_v1/user.proto
+
+generate-auth-api:
+	mkdir -p pkg/auth_v1
+	protoc --proto_path api/auth_v1 \
+	--go_out=pkg/auth_v1 --go_opt=paths=source_relative \
+	--plugin=protoc-gen-go=$(LOCAL_BIN)/protoc-gen-go \
+	--go-grpc_out=pkg/auth_v1 --go-grpc_opt=paths=source_relative \
+	--plugin=protoc-gen-go-grpc=$(LOCAL_BIN)/protoc-gen-go-grpc \
+	api/auth_v1/auth.proto
+
+generate-access-api:
+	mkdir -p pkg/access_v1
+	protoc --proto_path api/access_v1 \
+	--go_out=pkg/access_v1 --go_opt=paths=source_relative \
+	--plugin=protoc-gen-go=$(LOCAL_BIN)/protoc-gen-go \
+	--go-grpc_out=pkg/access_v1 --go-grpc_opt=paths=source_relative \
+	--plugin=protoc-gen-go-grpc=$(LOCAL_BIN)/protoc-gen-go-grpc \
+	api/access_v1/access.proto
 
 local-migration-status:
 	$(LOCAL_BIN)/goose -dir ${LOCAL_MIGRATION_DIR} postgres ${LOCAL_MIGRATION_DSN} status -v
@@ -101,3 +121,6 @@ gen-cert:
 	openssl req -new -key tls/service.key -out tls/service.csr -config tls/certificate.conf
 	openssl x509 -req -in tls/service.csr -CA tls/ca.cert -CAkey tls/ca.key -CAcreateserial \
     		-out tls/service.pem -days 365 -sha256 -extfile tls/certificate.conf -extensions req_ext
+
+gen-secret-key:
+	openssl rand -hex 55

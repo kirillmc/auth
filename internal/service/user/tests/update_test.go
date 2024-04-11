@@ -38,7 +38,7 @@ func TestUpdate(t *testing.T) {
 
 		req = &model.UserToUpdate{
 			Id: id,
-			Name: &wrapperspb.StringValue{
+			Username: &wrapperspb.StringValue{
 				Value: name,
 			},
 			Email: &wrapperspb.StringValue{

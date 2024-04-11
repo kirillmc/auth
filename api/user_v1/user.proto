@@ -62,10 +62,10 @@ enum Role{
 }
 
 message CreateRequest{
-  string name = 1[(validate.rules).string = {min_len:1,max_len:50}];
+  string username = 1[(validate.rules).string = {min_len:1,max_len:50}];
   string email = 2[(validate.rules).string = {email:true, max_len:50}];
-  string password = 3[(validate.rules).string = {pattern:"^[A-Za-z]+( [A-Za-z]+)*$",min_len:8, max_len:50}];
-  string password_confirm = 4[(validate.rules).string = {pattern:"^[A-Za-z]+( [A-Za-z]+)*$",min_len:8, max_len:50}];
+  string password = 3[(validate.rules).string = {pattern:"^[A-Za-z0-9]*$",min_len:8, max_len:50}];
+  string password_confirm = 4[(validate.rules).string = {pattern:"^[A-Za-z0-9]*$",min_len:8, max_len:50}];
   Role role = 5[(validate.rules).enum.defined_only = true];
 }
 
@@ -79,7 +79,7 @@ message GetRequest{
 
 message GetResponse{
   int64 id = 1;
-  string name = 2;
+  string username = 2;
   string email = 3;
   Role role = 4;
   google.protobuf.Timestamp created_at = 5;

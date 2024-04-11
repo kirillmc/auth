@@ -4,6 +4,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/kirillmc/auth/internal/model"
+	descAuth "github.com/kirillmc/auth/pkg/auth_v1"
 	desc "github.com/kirillmc/auth/pkg/user_v1"
 )
 
@@ -15,7 +16,7 @@ func ToGetResponseFromService(user *model.User) *desc.GetResponse {
 
 	return &desc.GetResponse{
 		Id:        user.Id,
-		Name:      user.Name,
+		Username:  user.Username,
 		Email:     user.Email,
 		Role:      desc.Role(user.Role),
 		CreatedAt: timestamppb.New(user.CreatedAt),
@@ -25,18 +26,26 @@ func ToGetResponseFromService(user *model.User) *desc.GetResponse {
 
 func ToUserModelCreateFromDesc(user *desc.CreateRequest) *model.UserToCreate {
 	return &model.UserToCreate{
-		Name:     user.Name,
-		Email:    user.Email,
-		Role:     model.Role(user.Role),
-		Password: user.Password,
+		Username:        user.Username,
+		Email:           user.Email,
+		Role:            model.Role(user.Role),
+		Password:        user.Password,
+		ConfirmPassword: user.PasswordConfirm,
 	}
 }
 
 func ToUserModelUpdateFromDesc(user *desc.UpdateRequest) *model.UserToUpdate {
 	return &model.UserToUpdate{
-		Id:    user.Id,
-		Name:  user.Name,
-		Email: user.Email,
-		Role:  model.Role(user.Role),
+		Id:       user.Id,
+		Username: user.Name,
+		Email:    user.Email,
+		Role:     model.Role(user.Role),
+	}
+}
+
+func ToUserToLoginFromDescAuth(user *descAuth.LoginRequest) *model.UserToLogin {
+	return &model.UserToLogin{
+		Username: user.Username,
+		Password: user.Password,
 	}
 }

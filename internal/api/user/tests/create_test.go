@@ -44,7 +44,7 @@ func TestCreate(t *testing.T) {
 		}
 
 		modelUser = &model.UserToCreate{
-			Name:     name,
+			Username: name,
 			Email:    email,
 			Password: password,
 			Role:     model.Role(role),
