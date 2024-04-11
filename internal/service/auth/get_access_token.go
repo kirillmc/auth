@@ -17,6 +17,11 @@ func (s *serv) GetAccessToken(ctx context.Context, refreshToken string) (string,
 		return "", err
 	}
 
+	accessConfig, err := env.NewAccessTokenConfig()
+	if err != nil {
+		return "", err
+	}
+
 	claims, err := utils.VerifyToken(refreshToken, []byte(refreshConfig.RefreshTokenSecretKey()))
 	if err != nil {
 		return "", status.Errorf(codes.Aborted, "invalid refresh token")
@@ -26,8 +31,8 @@ func (s *serv) GetAccessToken(ctx context.Context, refreshToken string) (string,
 		Username: claims.Username,
 		Role:     claims.Role,
 	},
-		[]byte(refreshConfig.RefreshTokenSecretKey()),
-		refreshConfig.RefreshTokenExpiration(),
+		[]byte(accessConfig.AccessTokenSecretKey()),
+		accessConfig.AccessTokenExpiration(),
 	)
 	if err != nil {
 		return "", err
