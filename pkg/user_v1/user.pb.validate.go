@@ -674,7 +674,7 @@ func (m *UpdateRequest) validate(all bool) error {
 
 		if l := utf8.RuneCountInString(wrapper.GetValue()); l < 1 || l > 50 {
 			err := UpdateRequestValidationError{
-				field:  "Username",
+				field:  "Name",
 				reason: "value length must be between 1 and 50 runes, inclusive",
 			}
 			if !all {
