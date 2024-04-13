@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	"google.golang.org/protobuf/types/known/emptypb"
-
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/gojuno/minimock/v3"
 	"github.com/kirillmc/auth/internal/api/user"
@@ -41,7 +39,6 @@ func TestDelete(t *testing.T) {
 	tests := []struct {
 		name            string
 		args            args
-		want            *emptypb.Empty
 		err             error
 		userServiceMock userServiceMockFunc
 	}{

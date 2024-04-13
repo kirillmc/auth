@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/brianvoe/gofakeit/v6"
@@ -64,7 +63,6 @@ func TestUpdate(t *testing.T) {
 	tests := []struct {
 		name            string
 		args            args
-		want            *emptypb.Empty
 		err             error
 		userServiceMock userServiceMockFunc
 	}{

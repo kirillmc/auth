@@ -5,16 +5,57 @@ package user_v1;
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
+import "google/api/annotations.proto";
+import "validate/validate.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
 
 option go_package = "github.com/kirillmc/auth/pkg/user_v1;user_v1";
+
+option(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger)={
+  info:{
+    title:"Auth API",
+    version:"1.0.0",
+    contact:{
+      name:"me",
+      email:"myEmail@something.com"
+    };
+  };
+
+  host:"localhost:8080",
+  schemes:HTTP,
+  schemes:HTTPS,
+  consumes:"application/json",
+  produces:"application/json",
+};
 
 // User API
 //Create|Get|Update|Delete
 service UserV1{
-  rpc Create(CreateRequest) returns (CreateResponse);
-  rpc Get(GetRequest) returns (GetResponse);
-  rpc Update(UpdateRequest) returns (google.protobuf.Empty);
-  rpc Delete(DeleteRequest) returns (google.protobuf.Empty);
+  rpc Create(CreateRequest) returns (CreateResponse){
+    option(google.api.http) = {
+      post: "/user/v1"
+      body:"*"
+    };
+  }
+
+  rpc Get(GetRequest) returns (GetResponse){
+    option(google.api.http) = {
+      get:"/user/v1"
+    };
+  }
+
+  rpc Update(UpdateRequest) returns (google.protobuf.Empty){
+    option(google.api.http) = {
+      patch:"/user/v1"
+      body:"*"
+    };
+  }
+
+  rpc Delete(DeleteRequest) returns (google.protobuf.Empty){
+    option(google.api.http) = {
+      delete:"/user/v1"
+    };
+  }
 }
 
 enum Role{
@@ -24,11 +65,11 @@ enum Role{
 }
 
 message CreateRequest{
-  string name = 1;
-  string email = 2;
-  string password = 3;
-  string password_confirm = 4;
-  Role role = 5;
+  string name = 1[(validate.rules).string = {min_len:1,max_len:50}];
+  string email = 2[(validate.rules).string = {email:true, max_len:50}];
+  string password = 3[(validate.rules).string = {pattern:"^[A-Za-z]+( [A-Za-z]+)*$",min_len:8, max_len:50}];
+  string password_confirm = 4[(validate.rules).string = {pattern:"^[A-Za-z]+( [A-Za-z]+)*$",min_len:8, max_len:50}];
+  Role role = 5[(validate.rules).enum.defined_only = true];
 }
 
 message CreateResponse{
@@ -50,9 +91,9 @@ message GetResponse{
 
 message UpdateRequest{
   int64 id = 1;
-  google.protobuf.StringValue name = 2;
-  google.protobuf.StringValue email = 3;
-  Role role = 4;
+  google.protobuf.StringValue name = 2[(validate.rules).string = {min_len:1,max_len:50}];
+  google.protobuf.StringValue email = 3[(validate.rules).string = {email:true, max_len:50}];
+  Role role = 4[(validate.rules).enum.defined_only = true];
 }
 
 message DeleteRequest{
