@@ -26,6 +26,7 @@ type serviceProvider struct {
 	grpcConfig    config.GRPCConfig
 	httpConfig    config.HTTPConfig
 	swaggerConfig config.SwaggerConfig
+	loggerConfig  config.LoggerConfig
 
 	dbClient db.Client
 
@@ -46,7 +47,6 @@ func newServiceProvider() *serviceProvider {
 	return &serviceProvider{}
 }
 
-// если Get - в GO Get НЕ УКАЗЫВАЮТ: НЕ GetPGConfig, A PGConfig
 func (s *serviceProvider) PGConfig() config.PGConfig {
 	if s.pgConfig == nil {
 		pgConfig, err := env.NewPGConfig()
@@ -99,6 +99,16 @@ func (s *serviceProvider) SwaggerConfig() config.SwaggerConfig {
 	}
 
 	return s.swaggerConfig
+}
+
+func (s *serviceProvider) LoggerConfig() config.LoggerConfig {
+	if s.loggerConfig == nil {
+		loggerConfig := env.NewLoggerConfig()
+
+		s.loggerConfig = loggerConfig
+	}
+
+	return s.loggerConfig
 }
 
 func (s *serviceProvider) DBClient(ctx context.Context) db.Client {

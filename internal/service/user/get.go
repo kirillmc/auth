@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 
+	"github.com/kirillmc/auth/internal/logger"
 	"github.com/kirillmc/auth/internal/model"
 )
 
@@ -11,6 +12,6 @@ func (s *serv) Get(ctx context.Context, id int64) (*model.User, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	logger.Info("user was gotten successfully")
 	return user, nil
 }

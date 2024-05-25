@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 
+	"github.com/kirillmc/auth/internal/logger"
 	"github.com/kirillmc/auth/internal/model"
 	"github.com/pkg/errors"
 )
@@ -16,6 +17,6 @@ func (s *serv) Create(ctx context.Context, req *model.UserToCreate) (int64, erro
 	if err != nil {
 		return 0, err
 	}
-
+	logger.Info("user was created successfully")
 	return id, nil
 }

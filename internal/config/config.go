@@ -32,6 +32,10 @@ type RefreshTokenConfig interface {
 	RefreshTokenExpiration() time.Duration
 }
 
+type LoggerConfig interface {
+	LogLevel() string
+}
+
 func Load(path string) error {
 	err := godotenv.Load(path)
 	if err != nil {

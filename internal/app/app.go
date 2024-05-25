@@ -14,8 +14,11 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 
+	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/kirillmc/auth/internal/config"
+	localInterceptor "github.com/kirillmc/auth/internal/interceptor"
+	"github.com/kirillmc/auth/internal/logger"
 	descAccess "github.com/kirillmc/auth/pkg/access_v1"
 	descAuth "github.com/kirillmc/auth/pkg/auth_v1"
 	descUser "github.com/kirillmc/auth/pkg/user_v1"
@@ -103,6 +106,7 @@ func (a *App) initDeps(ctx context.Context) error {
 	inits := []func(context.Context) error{
 		a.initConfig,
 		a.initServiceProvider,
+		a.initLogger,
 		a.initGRPCServer,
 		a.initHTTPServer,
 		a.initSwaggerServer,
@@ -135,6 +139,12 @@ func (a *App) initServiceProvider(_ context.Context) error {
 	return nil
 }
 
+func (a *App) initLogger(_ context.Context) error {
+	logger.InitLoggerWithLogLevel(a.serviceProvider.LoggerConfig().LogLevel())
+
+	return nil
+}
+
 func (a *App) initGRPCServer(ctx context.Context) error {
 	creds, err := credentials.NewServerTLSFromFile(SERVICE_PEM, SERVICE_KEY)
 	if err != nil {
@@ -143,7 +153,12 @@ func (a *App) initGRPCServer(ctx context.Context) error {
 
 	a.grpcServer = grpc.NewServer(
 		grpc.Creds(creds),
-		grpc.UnaryInterceptor(interceptor.ValidateInerceptor),
+		grpc.UnaryInterceptor(
+			grpcMiddleware.ChainUnaryServer(
+				localInterceptor.LogInterceptor,
+				interceptor.ValidateInerceptor,
+			),
+		),
 	)
 
 	reflection.Register(a.grpcServer) // рефлексия вкл для постмана

@@ -1,0 +1,8 @@
+{"level":"error","timestamp":"2024-05-25T18:32:15.890+0300","msg":"no rows in result set","method":"/user_v1.UserV1/Get","request":"id:1"}
+{"level":"info","timestamp":"2024-05-25T18:32:15.891+0300","msg":"request success","method":"/user_v1.UserV1/Get","request":"<nil>","response":"<nil>","duration":0.005106867}
+{"level":"error","timestamp":"2024-05-25T18:33:48.578+0300","msg":"no rows in result set","method":"/user_v1.UserV1/Get","request":"id:1"}
+{"level":"error","timestamp":"2024-05-25T18:34:23.190+0300","msg":"no rows in result set","method":"/user_v1.UserV1/Get","request":"id:1"}
+{"level":"error","timestamp":"2024-05-25T18:34:32.104+0300","msg":"invalid CreateRequest.Email: value must be a valid email address | caused by: mail: no angle-addr","method":"/user_v1.UserV1/Create","request":"username:\"Excepteur\"  email:\"ullamco amet fugiat officia sunt\"  password:\"dolore\"  password_confirm:\"ex consequat velit id exercitation\"  role:ADMIN"}
+{"level":"error","timestamp":"2024-05-25T19:17:31.586+0300","msg":"ERROR: duplicate key value violates unique constraint \"users_username_email_key\" (SQLSTATE 23505)","method":"/user_v1.UserV1/Create","request":"username:\"Excepteur\"  email:\"ulla@n.t\"  password:\"dolore123\"  password_confirm:\"dolore123\"  role:ADMIN"}
+{"level":"info","timestamp":"2024-05-25T19:18:07.221+0300","msg":"user was created successfully"}
+{"level":"info","timestamp":"2024-05-25T19:18:07.221+0300","msg":"request success","method":"/user_v1.UserV1/Create","request":"id:4","response":"id:4","duration":0.072890375}

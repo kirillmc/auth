@@ -1,6 +1,10 @@
 package user
 
-import "context"
+import (
+	"context"
+
+	"github.com/kirillmc/auth/internal/logger"
+)
 
 func (s *serv) Delete(ctx context.Context, id int64) error {
 	err := s.userRepository.Delete(ctx, id)
@@ -8,5 +12,6 @@ func (s *serv) Delete(ctx context.Context, id int64) error {
 		return err
 	}
 
+	logger.Info("user was deleted successfully")
 	return nil
 }

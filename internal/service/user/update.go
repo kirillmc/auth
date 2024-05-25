@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 
+	"github.com/kirillmc/auth/internal/logger"
 	"github.com/kirillmc/auth/internal/model"
 )
 
@@ -11,6 +12,6 @@ func (s *serv) Update(ctx context.Context, req *model.UserToUpdate) error {
 	if err != nil {
 		return err
 	}
-
+	logger.Info("user was updated successfully")
 	return nil
 }
