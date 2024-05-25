@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"time"
 
-	"google.golang.org/protobuf/types/known/wrapperspb"
+	"github.com/kirillmc/platform_common/pkg/nillable"
 )
 
 type User struct {
@@ -26,8 +26,8 @@ type UserToCreate struct {
 
 type UserToUpdate struct {
 	Id       int64
-	Username *wrapperspb.StringValue
-	Email    *wrapperspb.StringValue
+	Username nillable.NilString
+	Email    nillable.NilString
 	Role     Role
 }
 

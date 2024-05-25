@@ -2,20 +2,23 @@ package user
 
 import (
 	"context"
-	"crypto/sha256"
-	"fmt"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/kirillmc/auth/internal/model"
+	"github.com/kirillmc/auth/internal/repository"
 	"github.com/kirillmc/auth/internal/repository/user/converter"
 	modelRepo "github.com/kirillmc/auth/internal/repository/user/model"
 	"github.com/kirillmc/platform_common/pkg/db"
 )
 
 // ТУТ ИМПЛЕМЕНТАЦИЯ МЕТОДОВ
+
+func NewUserRepository(db db.Client) repository.UserRepository {
+	return &repo{db: db}
+}
 
 func (r *repo) Create(ctx context.Context, req *model.UserToCreate) (int64, error) {
 	hashPass, err := genPassHash(req.Password)
@@ -82,11 +85,11 @@ func (r *repo) Update(ctx context.Context, req *model.UserToUpdate) error {
 		Set(updatedAtColumn, time.Now()).
 		Where(sq.Eq{idColumn: req.Id})
 
-	if req.Username != nil {
+	if !req.Username.IsEmpty {
 		builder = builder.Set(nameColumn, req.Username.Value)
 	}
 
-	if req.Email != nil {
+	if !req.Email.IsEmpty {
 		builder = builder.Set(emailColumn, req.Email.Value)
 	}
 
@@ -133,12 +136,6 @@ func (r *repo) Delete(ctx context.Context, id int64) error {
 	return nil
 }
 
-func genPassHash1(pass string) string {
-	h := sha256.New()
-	h.Write([]byte(pass))
-
-	return fmt.Sprintf("%x", h.Sum(nil))
-}
 func genPassHash(pass string) (string, error) {
 	hashedPass, err := bcrypt.GenerateFromPassword([]byte(pass), 10)
 	if err != nil {

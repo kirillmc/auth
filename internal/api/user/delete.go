@@ -14,5 +14,5 @@ func (i *Implementation) Delete(ctx context.Context, req *desc.DeleteRequest) (*
 		return nil, err
 	}
 
-	return nil, nil
+	return &emptypb.Empty{}, nil
 }

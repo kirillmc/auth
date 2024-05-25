@@ -8,9 +8,9 @@ import (
 var _ def.AuthService = (*serv)(nil) //валидация имплементации интерфейса
 
 type serv struct {
-	userRepository repository.UserRepository
+	authRepository repository.AuthRepository
 }
 
-func NewService(userRepository repository.UserRepository) *serv {
-	return &serv{userRepository: userRepository}
+func NewService(authRepository repository.AuthRepository) *serv {
+	return &serv{authRepository: authRepository}
 }

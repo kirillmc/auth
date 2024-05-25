@@ -29,7 +29,9 @@ type serviceProvider struct {
 
 	dbClient db.Client
 
-	userRepository repository.UserRepository
+	userRepository   repository.UserRepository
+	accessRepository repository.AccessRepository
+	authRepository   repository.AuthRepository
 
 	userService   service.UserService
 	accessService service.AccessService
@@ -108,7 +110,7 @@ func (s *serviceProvider) DBClient(ctx context.Context) db.Client {
 
 		err = cl.DB().Ping(ctx)
 		if err != nil {
-			log.Fatalf("oing error: %s", err.Error())
+			log.Fatalf("ping error: %s", err.Error())
 		}
 
 		closer.Add(cl.Close)
@@ -120,10 +122,26 @@ func (s *serviceProvider) DBClient(ctx context.Context) db.Client {
 
 func (s *serviceProvider) UserRepository(ctx context.Context) repository.UserRepository {
 	if s.userRepository == nil {
-		s.userRepository = userRepo.NewRepository(s.DBClient(ctx))
+		s.userRepository = userRepo.NewUserRepository(s.DBClient(ctx))
 	}
 
 	return s.userRepository
+}
+
+func (s *serviceProvider) AccessRepository(ctx context.Context) repository.AccessRepository {
+	if s.accessRepository == nil {
+		s.accessRepository = userRepo.NewAccessRepository(s.DBClient(ctx))
+	}
+
+	return s.accessRepository
+}
+
+func (s *serviceProvider) AuthRepository(ctx context.Context) repository.AuthRepository {
+	if s.authRepository == nil {
+		s.authRepository = userRepo.NewAuthRepository(s.DBClient(ctx))
+	}
+
+	return s.authRepository
 }
 
 func (s *serviceProvider) UserService(ctx context.Context) service.UserService {
@@ -136,7 +154,7 @@ func (s *serviceProvider) UserService(ctx context.Context) service.UserService {
 
 func (s *serviceProvider) AccessService(ctx context.Context) service.AccessService {
 	if s.accessService == nil {
-		s.accessService = accessService.NewService(s.UserRepository(ctx))
+		s.accessService = accessService.NewService(s.AccessRepository(ctx))
 	}
 
 	return s.accessService
@@ -144,7 +162,7 @@ func (s *serviceProvider) AccessService(ctx context.Context) service.AccessServi
 
 func (s *serviceProvider) AuthService(ctx context.Context) service.AuthService {
 	if s.authService == nil {
-		s.authService = authService.NewService(s.UserRepository(ctx))
+		s.authService = authService.NewService(s.AuthRepository(ctx))
 	}
 
 	return s.authService

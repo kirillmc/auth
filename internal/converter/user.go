@@ -6,6 +6,7 @@ import (
 	"github.com/kirillmc/auth/internal/model"
 	descAuth "github.com/kirillmc/auth/pkg/auth_v1"
 	desc "github.com/kirillmc/auth/pkg/user_v1"
+	"github.com/kirillmc/platform_common/pkg/nillable"
 )
 
 func ToGetResponseFromService(user *model.User) *desc.GetResponse {
@@ -37,8 +38,8 @@ func ToUserModelCreateFromDesc(user *desc.CreateRequest) *model.UserToCreate {
 func ToUserModelUpdateFromDesc(user *desc.UpdateRequest) *model.UserToUpdate {
 	return &model.UserToUpdate{
 		Id:       user.Id,
-		Username: user.Name,
-		Email:    user.Email,
+		Username: nillable.Create(user.Name),
+		Email:    nillable.Create(user.Email),
 		Role:     model.Role(user.Role),
 	}
 }

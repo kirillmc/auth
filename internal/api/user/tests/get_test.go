@@ -32,7 +32,7 @@ func TestGet(t *testing.T) {
 		mc  = minimock.NewController(t)
 
 		id        = gofakeit.Int64()
-		name      = gofakeit.Name()
+		userName  = gofakeit.Name()
 		email     = gofakeit.Email()
 		role      = gofakeit.Number(0, 2)
 		createdAt = gofakeit.Date()
@@ -46,7 +46,7 @@ func TestGet(t *testing.T) {
 
 		serviceRes = &model.User{
 			Id:        id,
-			Username:  name,
+			Username:  userName,
 			Email:     email,
 			Role:      model.Role(role),
 			CreatedAt: createdAt,
@@ -58,7 +58,7 @@ func TestGet(t *testing.T) {
 
 		res = &desc.GetResponse{
 			Id:        id,
-			Username:  name,
+			Username:  userName,
 			Email:     email,
 			Role:      desc.Role(role),
 			CreatedAt: timestamppb.New(createdAt),

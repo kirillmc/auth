@@ -59,7 +59,7 @@ func NewApp(ctx context.Context) (*App, error) {
 
 func (a *App) Run() error {
 	defer func() {
-		closer.CloseAll() // не блокиррующий вызов
+		closer.CloseAll() // не блокирующий вызов
 		closer.Wait()     // блокирующий
 		// делает graceful shutdown - но не сработает при log.Fatal или os.Exit
 	}()
@@ -143,7 +143,6 @@ func (a *App) initGRPCServer(ctx context.Context) error {
 
 	a.grpcServer = grpc.NewServer(
 		grpc.Creds(creds),
-		//grpc.Creds(insecure.NewCredentials()),
 		grpc.UnaryInterceptor(interceptor.ValidateInerceptor),
 	)
 
@@ -276,6 +275,6 @@ func serveSwaggerFile(path string) http.HandlerFunc {
 			return
 		}
 
-		log.Printf("Served swwager file: %s", path)
+		log.Printf("Served swagger file: %s", path)
 	}
 }

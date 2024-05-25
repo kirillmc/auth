@@ -1,7 +1,6 @@
 package user
 
 import (
-	"github.com/kirillmc/auth/internal/repository"
 	"github.com/kirillmc/platform_common/pkg/db"
 )
 
@@ -23,8 +22,4 @@ const (
 
 type repo struct {
 	db db.Client
-}
-
-func NewRepository(db db.Client) repository.UserRepository {
-	return &repo{db: db}
 }

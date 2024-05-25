@@ -11,7 +11,7 @@ import "protoc-gen-openapiv2/options/annotations.proto";
 
 option go_package = "github.com/kirillmc/auth/pkg/user_v1;user_v1";
 
-option(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger)={
+option(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
   info:{
     title:"Auth API",
     version:"1.0.0",

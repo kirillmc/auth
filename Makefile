@@ -70,7 +70,7 @@ local-migration-status:
 	$(LOCAL_BIN)/goose -dir ${LOCAL_MIGRATION_DIR} postgres ${LOCAL_MIGRATION_DSN} status -v
 
 create-migration:
-	$(LOCAL_BIN)/goose -dir ${LOCAL_MIGRATION_DIR}  create make users_table sql
+	$(LOCAL_BIN)/goose -dir ${LOCAL_MIGRATION_DIR}  create users_table sql
 
 local-migration-up:
 	$(LOCAL_BIN)/goose -dir ${LOCAL_MIGRATION_DIR} postgres ${LOCAL_MIGRATION_DSN} up -v
