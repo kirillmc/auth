@@ -57,9 +57,9 @@ func (m *CreateRequest) validate(all bool) error {
 
 	var errors []error
 
-	if l := utf8.RuneCountInString(m.GetName()); l < 1 || l > 50 {
+	if l := utf8.RuneCountInString(m.GetUsername()); l < 1 || l > 50 {
 		err := CreateRequestValidationError{
-			field:  "Name",
+			field:  "Username",
 			reason: "value length must be between 1 and 50 runes, inclusive",
 		}
 		if !all {
@@ -105,7 +105,7 @@ func (m *CreateRequest) validate(all bool) error {
 	if !_CreateRequest_Password_Pattern.MatchString(m.GetPassword()) {
 		err := CreateRequestValidationError{
 			field:  "Password",
-			reason: "value does not match regex pattern \"^[A-Za-z]+( [A-Za-z]+)*$\"",
+			reason: "value does not match regex pattern \"^[A-Za-z0-9]*$\"",
 		}
 		if !all {
 			return err
@@ -127,7 +127,7 @@ func (m *CreateRequest) validate(all bool) error {
 	if !_CreateRequest_PasswordConfirm_Pattern.MatchString(m.GetPasswordConfirm()) {
 		err := CreateRequestValidationError{
 			field:  "PasswordConfirm",
-			reason: "value does not match regex pattern \"^[A-Za-z]+( [A-Za-z]+)*$\"",
+			reason: "value does not match regex pattern \"^[A-Za-z0-9]*$\"",
 		}
 		if !all {
 			return err
@@ -274,9 +274,9 @@ var _ interface {
 	ErrorName() string
 } = CreateRequestValidationError{}
 
-var _CreateRequest_Password_Pattern = regexp.MustCompile("^[A-Za-z]+( [A-Za-z]+)*$")
+var _CreateRequest_Password_Pattern = regexp.MustCompile("^[A-Za-z0-9]*$")
 
-var _CreateRequest_PasswordConfirm_Pattern = regexp.MustCompile("^[A-Za-z]+( [A-Za-z]+)*$")
+var _CreateRequest_PasswordConfirm_Pattern = regexp.MustCompile("^[A-Za-z0-9]*$")
 
 // Validate checks the field values on CreateResponse with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
@@ -505,7 +505,7 @@ func (m *GetResponse) validate(all bool) error {
 
 	// no validation rules for Id
 
-	// no validation rules for Name
+	// no validation rules for Username
 
 	// no validation rules for Email
 

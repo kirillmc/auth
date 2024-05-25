@@ -4,12 +4,16 @@ import (
 	"context"
 	"log"
 
+	"github.com/kirillmc/auth/internal/api/access"
+	"github.com/kirillmc/auth/internal/api/auth"
 	"github.com/kirillmc/auth/internal/api/user"
 	"github.com/kirillmc/auth/internal/config"
 	"github.com/kirillmc/auth/internal/config/env"
 	"github.com/kirillmc/auth/internal/repository"
 	userRepo "github.com/kirillmc/auth/internal/repository/user"
 	"github.com/kirillmc/auth/internal/service"
+	accessService "github.com/kirillmc/auth/internal/service/access"
+	authService "github.com/kirillmc/auth/internal/service/auth"
 	userService "github.com/kirillmc/auth/internal/service/user"
 	"github.com/kirillmc/platform_common/pkg/closer"
 	"github.com/kirillmc/platform_common/pkg/db"
@@ -25,10 +29,17 @@ type serviceProvider struct {
 
 	dbClient db.Client
 
-	userRepository repository.UserRepository
-	userService    service.UserService
+	userRepository   repository.UserRepository
+	accessRepository repository.AccessRepository
+	authRepository   repository.AuthRepository
 
-	userImpl *user.Implementation
+	userService   service.UserService
+	accessService service.AccessService
+	authService   service.AuthService
+
+	userImpl   *user.Implementation
+	authImpl   *auth.Implementation
+	accessImpl *access.Implementation
 }
 
 func newServiceProvider() *serviceProvider {
@@ -99,7 +110,7 @@ func (s *serviceProvider) DBClient(ctx context.Context) db.Client {
 
 		err = cl.DB().Ping(ctx)
 		if err != nil {
-			log.Fatalf("oing error: %s", err.Error())
+			log.Fatalf("ping error: %s", err.Error())
 		}
 
 		closer.Add(cl.Close)
@@ -111,10 +122,26 @@ func (s *serviceProvider) DBClient(ctx context.Context) db.Client {
 
 func (s *serviceProvider) UserRepository(ctx context.Context) repository.UserRepository {
 	if s.userRepository == nil {
-		s.userRepository = userRepo.NewRepository(s.DBClient(ctx))
+		s.userRepository = userRepo.NewUserRepository(s.DBClient(ctx))
 	}
 
 	return s.userRepository
+}
+
+func (s *serviceProvider) AccessRepository(ctx context.Context) repository.AccessRepository {
+	if s.accessRepository == nil {
+		s.accessRepository = userRepo.NewAccessRepository(s.DBClient(ctx))
+	}
+
+	return s.accessRepository
+}
+
+func (s *serviceProvider) AuthRepository(ctx context.Context) repository.AuthRepository {
+	if s.authRepository == nil {
+		s.authRepository = userRepo.NewAuthRepository(s.DBClient(ctx))
+	}
+
+	return s.authRepository
 }
 
 func (s *serviceProvider) UserService(ctx context.Context) service.UserService {
@@ -125,10 +152,42 @@ func (s *serviceProvider) UserService(ctx context.Context) service.UserService {
 	return s.userService
 }
 
+func (s *serviceProvider) AccessService(ctx context.Context) service.AccessService {
+	if s.accessService == nil {
+		s.accessService = accessService.NewService(s.AccessRepository(ctx))
+	}
+
+	return s.accessService
+}
+
+func (s *serviceProvider) AuthService(ctx context.Context) service.AuthService {
+	if s.authService == nil {
+		s.authService = authService.NewService(s.AuthRepository(ctx))
+	}
+
+	return s.authService
+}
+
 func (s *serviceProvider) UserImplementation(ctx context.Context) *user.Implementation {
 	if s.userImpl == nil {
 		s.userImpl = user.NewImplementation(s.UserService(ctx))
 	}
 
 	return s.userImpl
+}
+
+func (s *serviceProvider) AccessImplementation(ctx context.Context) *access.Implementation {
+	if s.accessImpl == nil {
+		s.accessImpl = access.NewImplementation(s.AccessService(ctx))
+	}
+
+	return s.accessImpl
+}
+
+func (s *serviceProvider) AuthImplementation(ctx context.Context) *auth.Implementation {
+	if s.authImpl == nil {
+		s.authImpl = auth.NewImplementation(s.AuthService(ctx))
+	}
+
+	return s.authImpl
 }

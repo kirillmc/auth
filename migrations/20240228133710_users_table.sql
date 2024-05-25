@@ -1,8 +1,8 @@
 -- +goose Up
-create table users
+create table if not exists users
 (
     id         serial primary key,
-    name       text      not null,
+    name   text      not null,
     email      text      not null,
     password   text      not null,
     role       integer   not null,
@@ -11,5 +11,5 @@ create table users
 );
 
 -- +goose Down
-drop table users;
+drop table if exists users;
 

@@ -4,12 +4,12 @@ import (
 	"database/sql"
 	"time"
 
-	"google.golang.org/protobuf/types/known/wrapperspb"
+	"github.com/kirillmc/platform_common/pkg/nillable"
 )
 
 type User struct {
 	Id        int64
-	Name      string
+	Username  string
 	Email     string
 	Role      Role
 	CreatedAt time.Time
@@ -17,17 +17,28 @@ type User struct {
 }
 
 type UserToCreate struct {
-	Name     string
-	Email    string
-	Password string
-	Role     Role
+	Username        string
+	Email           string
+	Password        string
+	ConfirmPassword string
+	Role            Role
 }
 
 type UserToUpdate struct {
-	Id    int64
-	Name  *wrapperspb.StringValue
-	Email *wrapperspb.StringValue
-	Role  Role
+	Id       int64
+	Username nillable.NilString
+	Email    nillable.NilString
+	Role     Role
+}
+
+type UserToLogin struct {
+	Username string
+	Password string
+}
+
+type UserForToken struct {
+	Username string `json:"username"`
+	Role     Role   `json:"role"`
 }
 
 type Role int32

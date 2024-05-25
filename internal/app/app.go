@@ -10,17 +10,25 @@ import (
 	"sync"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/kirillmc/auth/internal/config"
-	desc "github.com/kirillmc/auth/pkg/user_v1"
+	descAccess "github.com/kirillmc/auth/pkg/access_v1"
+	descAuth "github.com/kirillmc/auth/pkg/auth_v1"
+	descUser "github.com/kirillmc/auth/pkg/user_v1"
 	_ "github.com/kirillmc/auth/statik"
 	"github.com/kirillmc/platform_common/pkg/closer"
 	"github.com/kirillmc/platform_common/pkg/interceptor"
 	"github.com/rakyll/statik/fs"
 	"github.com/rs/cors"
+)
+
+const (
+	SERVICE_PEM = "tls/service.pem"
+	SERVICE_KEY = "tls/service.key"
 )
 
 var configPath string
@@ -51,7 +59,7 @@ func NewApp(ctx context.Context) (*App, error) {
 
 func (a *App) Run() error {
 	defer func() {
-		closer.CloseAll() // не блокиррующий вызов
+		closer.CloseAll() // не блокирующий вызов
 		closer.Wait()     // блокирующий
 		// делает graceful shutdown - но не сработает при log.Fatal или os.Exit
 	}()
@@ -128,14 +136,21 @@ func (a *App) initServiceProvider(_ context.Context) error {
 }
 
 func (a *App) initGRPCServer(ctx context.Context) error {
+	creds, err := credentials.NewServerTLSFromFile(SERVICE_PEM, SERVICE_KEY)
+	if err != nil {
+		log.Fatalf("failed to load TLS keys: %v", err)
+	}
+
 	a.grpcServer = grpc.NewServer(
-		grpc.Creds(insecure.NewCredentials()),
+		grpc.Creds(creds),
 		grpc.UnaryInterceptor(interceptor.ValidateInerceptor),
 	)
 
 	reflection.Register(a.grpcServer) // рефлексия вкл для постмана
 
-	desc.RegisterUserV1Server(a.grpcServer, a.serviceProvider.UserImplementation(ctx))
+	descUser.RegisterUserV1Server(a.grpcServer, a.serviceProvider.UserImplementation(ctx))
+	descAuth.RegisterAuthV1Server(a.grpcServer, a.serviceProvider.AuthImplementation(ctx))
+	descAccess.RegisterAccessV1Server(a.grpcServer, a.serviceProvider.AccessImplementation(ctx))
 
 	return nil
 }
@@ -147,7 +162,7 @@ func (a *App) initHTTPServer(ctx context.Context) error {
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	}
 
-	err := desc.RegisterUserV1HandlerFromEndpoint(ctx, mux, a.serviceProvider.GRPCConfig().Address(), opts)
+	err := descUser.RegisterUserV1HandlerFromEndpoint(ctx, mux, a.serviceProvider.GRPCConfig().Address(), opts)
 	if err != nil {
 		return err
 	}
@@ -260,6 +275,6 @@ func serveSwaggerFile(path string) http.HandlerFunc {
 			return
 		}
 
-		log.Printf("Served swwager file: %s", path)
+		log.Printf("Served swagger file: %s", path)
 	}
 }

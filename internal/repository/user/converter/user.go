@@ -8,7 +8,7 @@ import (
 func ToUserFromRepo(user *modelRepo.User) *model.User {
 	return &model.User{
 		Id:        user.Id,
-		Name:      user.Name,
+		Username:  user.Username,
 		Email:     user.Email,
 		Role:      user.Role,
 		CreatedAt: user.CreatedAt,

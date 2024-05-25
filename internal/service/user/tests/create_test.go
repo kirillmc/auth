@@ -36,10 +36,11 @@ func TestCreate(t *testing.T) {
 		repositoryErr = fmt.Errorf("error of repository layer")
 
 		req = &model.UserToCreate{
-			Name:     name,
-			Email:    email,
-			Password: password,
-			Role:     model.Role(role),
+			Username:        name,
+			Email:           email,
+			Password:        password,
+			ConfirmPassword: password,
+			Role:            model.Role(role),
 		}
 	)
 

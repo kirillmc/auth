@@ -37,6 +37,24 @@ type UserRepositoryMock struct {
 	beforeGetCounter uint64
 	GetMock          mUserRepositoryMockGet
 
+	funcGetAccessibleRoles          func(ctx context.Context) (m1 map[string]model.Role, err error)
+	inspectFuncGetAccessibleRoles   func(ctx context.Context)
+	afterGetAccessibleRolesCounter  uint64
+	beforeGetAccessibleRolesCounter uint64
+	GetAccessibleRolesMock          mUserRepositoryMockGetAccessibleRoles
+
+	funcGetHashPass          func(ctx context.Context, userName string) (s1 string, err error)
+	inspectFuncGetHashPass   func(ctx context.Context, userName string)
+	afterGetHashPassCounter  uint64
+	beforeGetHashPassCounter uint64
+	GetHashPassMock          mUserRepositoryMockGetHashPass
+
+	funcGetRole          func(ctx context.Context, userName string) (r1 model.Role, err error)
+	inspectFuncGetRole   func(ctx context.Context, userName string)
+	afterGetRoleCounter  uint64
+	beforeGetRoleCounter uint64
+	GetRoleMock          mUserRepositoryMockGetRole
+
 	funcUpdate          func(ctx context.Context, req *model.UserToUpdate) (err error)
 	inspectFuncUpdate   func(ctx context.Context, req *model.UserToUpdate)
 	afterUpdateCounter  uint64
@@ -60,6 +78,15 @@ func NewUserRepositoryMock(t minimock.Tester) *UserRepositoryMock {
 
 	m.GetMock = mUserRepositoryMockGet{mock: m}
 	m.GetMock.callArgs = []*UserRepositoryMockGetParams{}
+
+	m.GetAccessibleRolesMock = mUserRepositoryMockGetAccessibleRoles{mock: m}
+	m.GetAccessibleRolesMock.callArgs = []*UserRepositoryMockGetAccessibleRolesParams{}
+
+	m.GetHashPassMock = mUserRepositoryMockGetHashPass{mock: m}
+	m.GetHashPassMock.callArgs = []*UserRepositoryMockGetHashPassParams{}
+
+	m.GetRoleMock = mUserRepositoryMockGetRole{mock: m}
+	m.GetRoleMock.callArgs = []*UserRepositoryMockGetRoleParams{}
 
 	m.UpdateMock = mUserRepositoryMockUpdate{mock: m}
 	m.UpdateMock.callArgs = []*UserRepositoryMockUpdateParams{}
@@ -719,6 +746,656 @@ func (m *UserRepositoryMock) MinimockGetInspect() {
 	}
 }
 
+type mUserRepositoryMockGetAccessibleRoles struct {
+	mock               *UserRepositoryMock
+	defaultExpectation *UserRepositoryMockGetAccessibleRolesExpectation
+	expectations       []*UserRepositoryMockGetAccessibleRolesExpectation
+
+	callArgs []*UserRepositoryMockGetAccessibleRolesParams
+	mutex    sync.RWMutex
+}
+
+// UserRepositoryMockGetAccessibleRolesExpectation specifies expectation struct of the UserRepository.GetAccessibleRoles
+type UserRepositoryMockGetAccessibleRolesExpectation struct {
+	mock    *UserRepositoryMock
+	params  *UserRepositoryMockGetAccessibleRolesParams
+	results *UserRepositoryMockGetAccessibleRolesResults
+	Counter uint64
+}
+
+// UserRepositoryMockGetAccessibleRolesParams contains parameters of the UserRepository.GetAccessibleRoles
+type UserRepositoryMockGetAccessibleRolesParams struct {
+	ctx context.Context
+}
+
+// UserRepositoryMockGetAccessibleRolesResults contains results of the UserRepository.GetAccessibleRoles
+type UserRepositoryMockGetAccessibleRolesResults struct {
+	m1  map[string]model.Role
+	err error
+}
+
+// Expect sets up expected params for UserRepository.GetAccessibleRoles
+func (mmGetAccessibleRoles *mUserRepositoryMockGetAccessibleRoles) Expect(ctx context.Context) *mUserRepositoryMockGetAccessibleRoles {
+	if mmGetAccessibleRoles.mock.funcGetAccessibleRoles != nil {
+		mmGetAccessibleRoles.mock.t.Fatalf("UserRepositoryMock.GetAccessibleRoles mock is already set by Set")
+	}
+
+	if mmGetAccessibleRoles.defaultExpectation == nil {
+		mmGetAccessibleRoles.defaultExpectation = &UserRepositoryMockGetAccessibleRolesExpectation{}
+	}
+
+	mmGetAccessibleRoles.defaultExpectation.params = &UserRepositoryMockGetAccessibleRolesParams{ctx}
+	for _, e := range mmGetAccessibleRoles.expectations {
+		if minimock.Equal(e.params, mmGetAccessibleRoles.defaultExpectation.params) {
+			mmGetAccessibleRoles.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmGetAccessibleRoles.defaultExpectation.params)
+		}
+	}
+
+	return mmGetAccessibleRoles
+}
+
+// Inspect accepts an inspector function that has same arguments as the UserRepository.GetAccessibleRoles
+func (mmGetAccessibleRoles *mUserRepositoryMockGetAccessibleRoles) Inspect(f func(ctx context.Context)) *mUserRepositoryMockGetAccessibleRoles {
+	if mmGetAccessibleRoles.mock.inspectFuncGetAccessibleRoles != nil {
+		mmGetAccessibleRoles.mock.t.Fatalf("Inspect function is already set for UserRepositoryMock.GetAccessibleRoles")
+	}
+
+	mmGetAccessibleRoles.mock.inspectFuncGetAccessibleRoles = f
+
+	return mmGetAccessibleRoles
+}
+
+// Return sets up results that will be returned by UserRepository.GetAccessibleRoles
+func (mmGetAccessibleRoles *mUserRepositoryMockGetAccessibleRoles) Return(m1 map[string]model.Role, err error) *UserRepositoryMock {
+	if mmGetAccessibleRoles.mock.funcGetAccessibleRoles != nil {
+		mmGetAccessibleRoles.mock.t.Fatalf("UserRepositoryMock.GetAccessibleRoles mock is already set by Set")
+	}
+
+	if mmGetAccessibleRoles.defaultExpectation == nil {
+		mmGetAccessibleRoles.defaultExpectation = &UserRepositoryMockGetAccessibleRolesExpectation{mock: mmGetAccessibleRoles.mock}
+	}
+	mmGetAccessibleRoles.defaultExpectation.results = &UserRepositoryMockGetAccessibleRolesResults{m1, err}
+	return mmGetAccessibleRoles.mock
+}
+
+// Set uses given function f to mock the UserRepository.GetAccessibleRoles method
+func (mmGetAccessibleRoles *mUserRepositoryMockGetAccessibleRoles) Set(f func(ctx context.Context) (m1 map[string]model.Role, err error)) *UserRepositoryMock {
+	if mmGetAccessibleRoles.defaultExpectation != nil {
+		mmGetAccessibleRoles.mock.t.Fatalf("Default expectation is already set for the UserRepository.GetAccessibleRoles method")
+	}
+
+	if len(mmGetAccessibleRoles.expectations) > 0 {
+		mmGetAccessibleRoles.mock.t.Fatalf("Some expectations are already set for the UserRepository.GetAccessibleRoles method")
+	}
+
+	mmGetAccessibleRoles.mock.funcGetAccessibleRoles = f
+	return mmGetAccessibleRoles.mock
+}
+
+// When sets expectation for the UserRepository.GetAccessibleRoles which will trigger the result defined by the following
+// Then helper
+func (mmGetAccessibleRoles *mUserRepositoryMockGetAccessibleRoles) When(ctx context.Context) *UserRepositoryMockGetAccessibleRolesExpectation {
+	if mmGetAccessibleRoles.mock.funcGetAccessibleRoles != nil {
+		mmGetAccessibleRoles.mock.t.Fatalf("UserRepositoryMock.GetAccessibleRoles mock is already set by Set")
+	}
+
+	expectation := &UserRepositoryMockGetAccessibleRolesExpectation{
+		mock:   mmGetAccessibleRoles.mock,
+		params: &UserRepositoryMockGetAccessibleRolesParams{ctx},
+	}
+	mmGetAccessibleRoles.expectations = append(mmGetAccessibleRoles.expectations, expectation)
+	return expectation
+}
+
+// Then sets up UserRepository.GetAccessibleRoles return parameters for the expectation previously defined by the When method
+func (e *UserRepositoryMockGetAccessibleRolesExpectation) Then(m1 map[string]model.Role, err error) *UserRepositoryMock {
+	e.results = &UserRepositoryMockGetAccessibleRolesResults{m1, err}
+	return e.mock
+}
+
+// GetAccessibleRoles implements repository.UserRepository
+func (mmGetAccessibleRoles *UserRepositoryMock) GetAccessibleRoles(ctx context.Context) (m1 map[string]model.Role, err error) {
+	mm_atomic.AddUint64(&mmGetAccessibleRoles.beforeGetAccessibleRolesCounter, 1)
+	defer mm_atomic.AddUint64(&mmGetAccessibleRoles.afterGetAccessibleRolesCounter, 1)
+
+	if mmGetAccessibleRoles.inspectFuncGetAccessibleRoles != nil {
+		mmGetAccessibleRoles.inspectFuncGetAccessibleRoles(ctx)
+	}
+
+	mm_params := UserRepositoryMockGetAccessibleRolesParams{ctx}
+
+	// Record call args
+	mmGetAccessibleRoles.GetAccessibleRolesMock.mutex.Lock()
+	mmGetAccessibleRoles.GetAccessibleRolesMock.callArgs = append(mmGetAccessibleRoles.GetAccessibleRolesMock.callArgs, &mm_params)
+	mmGetAccessibleRoles.GetAccessibleRolesMock.mutex.Unlock()
+
+	for _, e := range mmGetAccessibleRoles.GetAccessibleRolesMock.expectations {
+		if minimock.Equal(*e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.m1, e.results.err
+		}
+	}
+
+	if mmGetAccessibleRoles.GetAccessibleRolesMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmGetAccessibleRoles.GetAccessibleRolesMock.defaultExpectation.Counter, 1)
+		mm_want := mmGetAccessibleRoles.GetAccessibleRolesMock.defaultExpectation.params
+		mm_got := UserRepositoryMockGetAccessibleRolesParams{ctx}
+		if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmGetAccessibleRoles.t.Errorf("UserRepositoryMock.GetAccessibleRoles got unexpected parameters, want: %#v, got: %#v%s\n", *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmGetAccessibleRoles.GetAccessibleRolesMock.defaultExpectation.results
+		if mm_results == nil {
+			mmGetAccessibleRoles.t.Fatal("No results are set for the UserRepositoryMock.GetAccessibleRoles")
+		}
+		return (*mm_results).m1, (*mm_results).err
+	}
+	if mmGetAccessibleRoles.funcGetAccessibleRoles != nil {
+		return mmGetAccessibleRoles.funcGetAccessibleRoles(ctx)
+	}
+	mmGetAccessibleRoles.t.Fatalf("Unexpected call to UserRepositoryMock.GetAccessibleRoles. %v", ctx)
+	return
+}
+
+// GetAccessibleRolesAfterCounter returns a count of finished UserRepositoryMock.GetAccessibleRoles invocations
+func (mmGetAccessibleRoles *UserRepositoryMock) GetAccessibleRolesAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmGetAccessibleRoles.afterGetAccessibleRolesCounter)
+}
+
+// GetAccessibleRolesBeforeCounter returns a count of UserRepositoryMock.GetAccessibleRoles invocations
+func (mmGetAccessibleRoles *UserRepositoryMock) GetAccessibleRolesBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmGetAccessibleRoles.beforeGetAccessibleRolesCounter)
+}
+
+// Calls returns a list of arguments used in each call to UserRepositoryMock.GetAccessibleRoles.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmGetAccessibleRoles *mUserRepositoryMockGetAccessibleRoles) Calls() []*UserRepositoryMockGetAccessibleRolesParams {
+	mmGetAccessibleRoles.mutex.RLock()
+
+	argCopy := make([]*UserRepositoryMockGetAccessibleRolesParams, len(mmGetAccessibleRoles.callArgs))
+	copy(argCopy, mmGetAccessibleRoles.callArgs)
+
+	mmGetAccessibleRoles.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockGetAccessibleRolesDone returns true if the count of the GetAccessibleRoles invocations corresponds
+// the number of defined expectations
+func (m *UserRepositoryMock) MinimockGetAccessibleRolesDone() bool {
+	for _, e := range m.GetAccessibleRolesMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	// if default expectation was set then invocations count should be greater than zero
+	if m.GetAccessibleRolesMock.defaultExpectation != nil && mm_atomic.LoadUint64(&m.afterGetAccessibleRolesCounter) < 1 {
+		return false
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcGetAccessibleRoles != nil && mm_atomic.LoadUint64(&m.afterGetAccessibleRolesCounter) < 1 {
+		return false
+	}
+	return true
+}
+
+// MinimockGetAccessibleRolesInspect logs each unmet expectation
+func (m *UserRepositoryMock) MinimockGetAccessibleRolesInspect() {
+	for _, e := range m.GetAccessibleRolesMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to UserRepositoryMock.GetAccessibleRoles with params: %#v", *e.params)
+		}
+	}
+
+	// if default expectation was set then invocations count should be greater than zero
+	if m.GetAccessibleRolesMock.defaultExpectation != nil && mm_atomic.LoadUint64(&m.afterGetAccessibleRolesCounter) < 1 {
+		if m.GetAccessibleRolesMock.defaultExpectation.params == nil {
+			m.t.Error("Expected call to UserRepositoryMock.GetAccessibleRoles")
+		} else {
+			m.t.Errorf("Expected call to UserRepositoryMock.GetAccessibleRoles with params: %#v", *m.GetAccessibleRolesMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcGetAccessibleRoles != nil && mm_atomic.LoadUint64(&m.afterGetAccessibleRolesCounter) < 1 {
+		m.t.Error("Expected call to UserRepositoryMock.GetAccessibleRoles")
+	}
+}
+
+type mUserRepositoryMockGetHashPass struct {
+	mock               *UserRepositoryMock
+	defaultExpectation *UserRepositoryMockGetHashPassExpectation
+	expectations       []*UserRepositoryMockGetHashPassExpectation
+
+	callArgs []*UserRepositoryMockGetHashPassParams
+	mutex    sync.RWMutex
+}
+
+// UserRepositoryMockGetHashPassExpectation specifies expectation struct of the UserRepository.GetHashPass
+type UserRepositoryMockGetHashPassExpectation struct {
+	mock    *UserRepositoryMock
+	params  *UserRepositoryMockGetHashPassParams
+	results *UserRepositoryMockGetHashPassResults
+	Counter uint64
+}
+
+// UserRepositoryMockGetHashPassParams contains parameters of the UserRepository.GetHashPass
+type UserRepositoryMockGetHashPassParams struct {
+	ctx      context.Context
+	userName string
+}
+
+// UserRepositoryMockGetHashPassResults contains results of the UserRepository.GetHashPass
+type UserRepositoryMockGetHashPassResults struct {
+	s1  string
+	err error
+}
+
+// Expect sets up expected params for UserRepository.GetHashPass
+func (mmGetHashPass *mUserRepositoryMockGetHashPass) Expect(ctx context.Context, userName string) *mUserRepositoryMockGetHashPass {
+	if mmGetHashPass.mock.funcGetHashPass != nil {
+		mmGetHashPass.mock.t.Fatalf("UserRepositoryMock.GetHashPass mock is already set by Set")
+	}
+
+	if mmGetHashPass.defaultExpectation == nil {
+		mmGetHashPass.defaultExpectation = &UserRepositoryMockGetHashPassExpectation{}
+	}
+
+	mmGetHashPass.defaultExpectation.params = &UserRepositoryMockGetHashPassParams{ctx, userName}
+	for _, e := range mmGetHashPass.expectations {
+		if minimock.Equal(e.params, mmGetHashPass.defaultExpectation.params) {
+			mmGetHashPass.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmGetHashPass.defaultExpectation.params)
+		}
+	}
+
+	return mmGetHashPass
+}
+
+// Inspect accepts an inspector function that has same arguments as the UserRepository.GetHashPass
+func (mmGetHashPass *mUserRepositoryMockGetHashPass) Inspect(f func(ctx context.Context, userName string)) *mUserRepositoryMockGetHashPass {
+	if mmGetHashPass.mock.inspectFuncGetHashPass != nil {
+		mmGetHashPass.mock.t.Fatalf("Inspect function is already set for UserRepositoryMock.GetHashPass")
+	}
+
+	mmGetHashPass.mock.inspectFuncGetHashPass = f
+
+	return mmGetHashPass
+}
+
+// Return sets up results that will be returned by UserRepository.GetHashPass
+func (mmGetHashPass *mUserRepositoryMockGetHashPass) Return(s1 string, err error) *UserRepositoryMock {
+	if mmGetHashPass.mock.funcGetHashPass != nil {
+		mmGetHashPass.mock.t.Fatalf("UserRepositoryMock.GetHashPass mock is already set by Set")
+	}
+
+	if mmGetHashPass.defaultExpectation == nil {
+		mmGetHashPass.defaultExpectation = &UserRepositoryMockGetHashPassExpectation{mock: mmGetHashPass.mock}
+	}
+	mmGetHashPass.defaultExpectation.results = &UserRepositoryMockGetHashPassResults{s1, err}
+	return mmGetHashPass.mock
+}
+
+// Set uses given function f to mock the UserRepository.GetHashPass method
+func (mmGetHashPass *mUserRepositoryMockGetHashPass) Set(f func(ctx context.Context, userName string) (s1 string, err error)) *UserRepositoryMock {
+	if mmGetHashPass.defaultExpectation != nil {
+		mmGetHashPass.mock.t.Fatalf("Default expectation is already set for the UserRepository.GetHashPass method")
+	}
+
+	if len(mmGetHashPass.expectations) > 0 {
+		mmGetHashPass.mock.t.Fatalf("Some expectations are already set for the UserRepository.GetHashPass method")
+	}
+
+	mmGetHashPass.mock.funcGetHashPass = f
+	return mmGetHashPass.mock
+}
+
+// When sets expectation for the UserRepository.GetHashPass which will trigger the result defined by the following
+// Then helper
+func (mmGetHashPass *mUserRepositoryMockGetHashPass) When(ctx context.Context, userName string) *UserRepositoryMockGetHashPassExpectation {
+	if mmGetHashPass.mock.funcGetHashPass != nil {
+		mmGetHashPass.mock.t.Fatalf("UserRepositoryMock.GetHashPass mock is already set by Set")
+	}
+
+	expectation := &UserRepositoryMockGetHashPassExpectation{
+		mock:   mmGetHashPass.mock,
+		params: &UserRepositoryMockGetHashPassParams{ctx, userName},
+	}
+	mmGetHashPass.expectations = append(mmGetHashPass.expectations, expectation)
+	return expectation
+}
+
+// Then sets up UserRepository.GetHashPass return parameters for the expectation previously defined by the When method
+func (e *UserRepositoryMockGetHashPassExpectation) Then(s1 string, err error) *UserRepositoryMock {
+	e.results = &UserRepositoryMockGetHashPassResults{s1, err}
+	return e.mock
+}
+
+// GetHashPass implements repository.UserRepository
+func (mmGetHashPass *UserRepositoryMock) GetHashPass(ctx context.Context, userName string) (s1 string, err error) {
+	mm_atomic.AddUint64(&mmGetHashPass.beforeGetHashPassCounter, 1)
+	defer mm_atomic.AddUint64(&mmGetHashPass.afterGetHashPassCounter, 1)
+
+	if mmGetHashPass.inspectFuncGetHashPass != nil {
+		mmGetHashPass.inspectFuncGetHashPass(ctx, userName)
+	}
+
+	mm_params := UserRepositoryMockGetHashPassParams{ctx, userName}
+
+	// Record call args
+	mmGetHashPass.GetHashPassMock.mutex.Lock()
+	mmGetHashPass.GetHashPassMock.callArgs = append(mmGetHashPass.GetHashPassMock.callArgs, &mm_params)
+	mmGetHashPass.GetHashPassMock.mutex.Unlock()
+
+	for _, e := range mmGetHashPass.GetHashPassMock.expectations {
+		if minimock.Equal(*e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.s1, e.results.err
+		}
+	}
+
+	if mmGetHashPass.GetHashPassMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmGetHashPass.GetHashPassMock.defaultExpectation.Counter, 1)
+		mm_want := mmGetHashPass.GetHashPassMock.defaultExpectation.params
+		mm_got := UserRepositoryMockGetHashPassParams{ctx, userName}
+		if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmGetHashPass.t.Errorf("UserRepositoryMock.GetHashPass got unexpected parameters, want: %#v, got: %#v%s\n", *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmGetHashPass.GetHashPassMock.defaultExpectation.results
+		if mm_results == nil {
+			mmGetHashPass.t.Fatal("No results are set for the UserRepositoryMock.GetHashPass")
+		}
+		return (*mm_results).s1, (*mm_results).err
+	}
+	if mmGetHashPass.funcGetHashPass != nil {
+		return mmGetHashPass.funcGetHashPass(ctx, userName)
+	}
+	mmGetHashPass.t.Fatalf("Unexpected call to UserRepositoryMock.GetHashPass. %v %v", ctx, userName)
+	return
+}
+
+// GetHashPassAfterCounter returns a count of finished UserRepositoryMock.GetHashPass invocations
+func (mmGetHashPass *UserRepositoryMock) GetHashPassAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmGetHashPass.afterGetHashPassCounter)
+}
+
+// GetHashPassBeforeCounter returns a count of UserRepositoryMock.GetHashPass invocations
+func (mmGetHashPass *UserRepositoryMock) GetHashPassBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmGetHashPass.beforeGetHashPassCounter)
+}
+
+// Calls returns a list of arguments used in each call to UserRepositoryMock.GetHashPass.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmGetHashPass *mUserRepositoryMockGetHashPass) Calls() []*UserRepositoryMockGetHashPassParams {
+	mmGetHashPass.mutex.RLock()
+
+	argCopy := make([]*UserRepositoryMockGetHashPassParams, len(mmGetHashPass.callArgs))
+	copy(argCopy, mmGetHashPass.callArgs)
+
+	mmGetHashPass.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockGetHashPassDone returns true if the count of the GetHashPass invocations corresponds
+// the number of defined expectations
+func (m *UserRepositoryMock) MinimockGetHashPassDone() bool {
+	for _, e := range m.GetHashPassMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	// if default expectation was set then invocations count should be greater than zero
+	if m.GetHashPassMock.defaultExpectation != nil && mm_atomic.LoadUint64(&m.afterGetHashPassCounter) < 1 {
+		return false
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcGetHashPass != nil && mm_atomic.LoadUint64(&m.afterGetHashPassCounter) < 1 {
+		return false
+	}
+	return true
+}
+
+// MinimockGetHashPassInspect logs each unmet expectation
+func (m *UserRepositoryMock) MinimockGetHashPassInspect() {
+	for _, e := range m.GetHashPassMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to UserRepositoryMock.GetHashPass with params: %#v", *e.params)
+		}
+	}
+
+	// if default expectation was set then invocations count should be greater than zero
+	if m.GetHashPassMock.defaultExpectation != nil && mm_atomic.LoadUint64(&m.afterGetHashPassCounter) < 1 {
+		if m.GetHashPassMock.defaultExpectation.params == nil {
+			m.t.Error("Expected call to UserRepositoryMock.GetHashPass")
+		} else {
+			m.t.Errorf("Expected call to UserRepositoryMock.GetHashPass with params: %#v", *m.GetHashPassMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcGetHashPass != nil && mm_atomic.LoadUint64(&m.afterGetHashPassCounter) < 1 {
+		m.t.Error("Expected call to UserRepositoryMock.GetHashPass")
+	}
+}
+
+type mUserRepositoryMockGetRole struct {
+	mock               *UserRepositoryMock
+	defaultExpectation *UserRepositoryMockGetRoleExpectation
+	expectations       []*UserRepositoryMockGetRoleExpectation
+
+	callArgs []*UserRepositoryMockGetRoleParams
+	mutex    sync.RWMutex
+}
+
+// UserRepositoryMockGetRoleExpectation specifies expectation struct of the UserRepository.GetRole
+type UserRepositoryMockGetRoleExpectation struct {
+	mock    *UserRepositoryMock
+	params  *UserRepositoryMockGetRoleParams
+	results *UserRepositoryMockGetRoleResults
+	Counter uint64
+}
+
+// UserRepositoryMockGetRoleParams contains parameters of the UserRepository.GetRole
+type UserRepositoryMockGetRoleParams struct {
+	ctx      context.Context
+	userName string
+}
+
+// UserRepositoryMockGetRoleResults contains results of the UserRepository.GetRole
+type UserRepositoryMockGetRoleResults struct {
+	r1  model.Role
+	err error
+}
+
+// Expect sets up expected params for UserRepository.GetRole
+func (mmGetRole *mUserRepositoryMockGetRole) Expect(ctx context.Context, userName string) *mUserRepositoryMockGetRole {
+	if mmGetRole.mock.funcGetRole != nil {
+		mmGetRole.mock.t.Fatalf("UserRepositoryMock.GetRole mock is already set by Set")
+	}
+
+	if mmGetRole.defaultExpectation == nil {
+		mmGetRole.defaultExpectation = &UserRepositoryMockGetRoleExpectation{}
+	}
+
+	mmGetRole.defaultExpectation.params = &UserRepositoryMockGetRoleParams{ctx, userName}
+	for _, e := range mmGetRole.expectations {
+		if minimock.Equal(e.params, mmGetRole.defaultExpectation.params) {
+			mmGetRole.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmGetRole.defaultExpectation.params)
+		}
+	}
+
+	return mmGetRole
+}
+
+// Inspect accepts an inspector function that has same arguments as the UserRepository.GetRole
+func (mmGetRole *mUserRepositoryMockGetRole) Inspect(f func(ctx context.Context, userName string)) *mUserRepositoryMockGetRole {
+	if mmGetRole.mock.inspectFuncGetRole != nil {
+		mmGetRole.mock.t.Fatalf("Inspect function is already set for UserRepositoryMock.GetRole")
+	}
+
+	mmGetRole.mock.inspectFuncGetRole = f
+
+	return mmGetRole
+}
+
+// Return sets up results that will be returned by UserRepository.GetRole
+func (mmGetRole *mUserRepositoryMockGetRole) Return(r1 model.Role, err error) *UserRepositoryMock {
+	if mmGetRole.mock.funcGetRole != nil {
+		mmGetRole.mock.t.Fatalf("UserRepositoryMock.GetRole mock is already set by Set")
+	}
+
+	if mmGetRole.defaultExpectation == nil {
+		mmGetRole.defaultExpectation = &UserRepositoryMockGetRoleExpectation{mock: mmGetRole.mock}
+	}
+	mmGetRole.defaultExpectation.results = &UserRepositoryMockGetRoleResults{r1, err}
+	return mmGetRole.mock
+}
+
+// Set uses given function f to mock the UserRepository.GetRole method
+func (mmGetRole *mUserRepositoryMockGetRole) Set(f func(ctx context.Context, userName string) (r1 model.Role, err error)) *UserRepositoryMock {
+	if mmGetRole.defaultExpectation != nil {
+		mmGetRole.mock.t.Fatalf("Default expectation is already set for the UserRepository.GetRole method")
+	}
+
+	if len(mmGetRole.expectations) > 0 {
+		mmGetRole.mock.t.Fatalf("Some expectations are already set for the UserRepository.GetRole method")
+	}
+
+	mmGetRole.mock.funcGetRole = f
+	return mmGetRole.mock
+}
+
+// When sets expectation for the UserRepository.GetRole which will trigger the result defined by the following
+// Then helper
+func (mmGetRole *mUserRepositoryMockGetRole) When(ctx context.Context, userName string) *UserRepositoryMockGetRoleExpectation {
+	if mmGetRole.mock.funcGetRole != nil {
+		mmGetRole.mock.t.Fatalf("UserRepositoryMock.GetRole mock is already set by Set")
+	}
+
+	expectation := &UserRepositoryMockGetRoleExpectation{
+		mock:   mmGetRole.mock,
+		params: &UserRepositoryMockGetRoleParams{ctx, userName},
+	}
+	mmGetRole.expectations = append(mmGetRole.expectations, expectation)
+	return expectation
+}
+
+// Then sets up UserRepository.GetRole return parameters for the expectation previously defined by the When method
+func (e *UserRepositoryMockGetRoleExpectation) Then(r1 model.Role, err error) *UserRepositoryMock {
+	e.results = &UserRepositoryMockGetRoleResults{r1, err}
+	return e.mock
+}
+
+// GetRole implements repository.UserRepository
+func (mmGetRole *UserRepositoryMock) GetRole(ctx context.Context, userName string) (r1 model.Role, err error) {
+	mm_atomic.AddUint64(&mmGetRole.beforeGetRoleCounter, 1)
+	defer mm_atomic.AddUint64(&mmGetRole.afterGetRoleCounter, 1)
+
+	if mmGetRole.inspectFuncGetRole != nil {
+		mmGetRole.inspectFuncGetRole(ctx, userName)
+	}
+
+	mm_params := UserRepositoryMockGetRoleParams{ctx, userName}
+
+	// Record call args
+	mmGetRole.GetRoleMock.mutex.Lock()
+	mmGetRole.GetRoleMock.callArgs = append(mmGetRole.GetRoleMock.callArgs, &mm_params)
+	mmGetRole.GetRoleMock.mutex.Unlock()
+
+	for _, e := range mmGetRole.GetRoleMock.expectations {
+		if minimock.Equal(*e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.r1, e.results.err
+		}
+	}
+
+	if mmGetRole.GetRoleMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmGetRole.GetRoleMock.defaultExpectation.Counter, 1)
+		mm_want := mmGetRole.GetRoleMock.defaultExpectation.params
+		mm_got := UserRepositoryMockGetRoleParams{ctx, userName}
+		if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmGetRole.t.Errorf("UserRepositoryMock.GetRole got unexpected parameters, want: %#v, got: %#v%s\n", *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmGetRole.GetRoleMock.defaultExpectation.results
+		if mm_results == nil {
+			mmGetRole.t.Fatal("No results are set for the UserRepositoryMock.GetRole")
+		}
+		return (*mm_results).r1, (*mm_results).err
+	}
+	if mmGetRole.funcGetRole != nil {
+		return mmGetRole.funcGetRole(ctx, userName)
+	}
+	mmGetRole.t.Fatalf("Unexpected call to UserRepositoryMock.GetRole. %v %v", ctx, userName)
+	return
+}
+
+// GetRoleAfterCounter returns a count of finished UserRepositoryMock.GetRole invocations
+func (mmGetRole *UserRepositoryMock) GetRoleAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmGetRole.afterGetRoleCounter)
+}
+
+// GetRoleBeforeCounter returns a count of UserRepositoryMock.GetRole invocations
+func (mmGetRole *UserRepositoryMock) GetRoleBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmGetRole.beforeGetRoleCounter)
+}
+
+// Calls returns a list of arguments used in each call to UserRepositoryMock.GetRole.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmGetRole *mUserRepositoryMockGetRole) Calls() []*UserRepositoryMockGetRoleParams {
+	mmGetRole.mutex.RLock()
+
+	argCopy := make([]*UserRepositoryMockGetRoleParams, len(mmGetRole.callArgs))
+	copy(argCopy, mmGetRole.callArgs)
+
+	mmGetRole.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockGetRoleDone returns true if the count of the GetRole invocations corresponds
+// the number of defined expectations
+func (m *UserRepositoryMock) MinimockGetRoleDone() bool {
+	for _, e := range m.GetRoleMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	// if default expectation was set then invocations count should be greater than zero
+	if m.GetRoleMock.defaultExpectation != nil && mm_atomic.LoadUint64(&m.afterGetRoleCounter) < 1 {
+		return false
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcGetRole != nil && mm_atomic.LoadUint64(&m.afterGetRoleCounter) < 1 {
+		return false
+	}
+	return true
+}
+
+// MinimockGetRoleInspect logs each unmet expectation
+func (m *UserRepositoryMock) MinimockGetRoleInspect() {
+	for _, e := range m.GetRoleMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to UserRepositoryMock.GetRole with params: %#v", *e.params)
+		}
+	}
+
+	// if default expectation was set then invocations count should be greater than zero
+	if m.GetRoleMock.defaultExpectation != nil && mm_atomic.LoadUint64(&m.afterGetRoleCounter) < 1 {
+		if m.GetRoleMock.defaultExpectation.params == nil {
+			m.t.Error("Expected call to UserRepositoryMock.GetRole")
+		} else {
+			m.t.Errorf("Expected call to UserRepositoryMock.GetRole with params: %#v", *m.GetRoleMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcGetRole != nil && mm_atomic.LoadUint64(&m.afterGetRoleCounter) < 1 {
+		m.t.Error("Expected call to UserRepositoryMock.GetRole")
+	}
+}
+
 type mUserRepositoryMockUpdate struct {
 	mock               *UserRepositoryMock
 	defaultExpectation *UserRepositoryMockUpdateExpectation
@@ -945,6 +1622,12 @@ func (m *UserRepositoryMock) MinimockFinish() {
 
 			m.MinimockGetInspect()
 
+			m.MinimockGetAccessibleRolesInspect()
+
+			m.MinimockGetHashPassInspect()
+
+			m.MinimockGetRoleInspect()
+
 			m.MinimockUpdateInspect()
 			m.t.FailNow()
 		}
@@ -973,5 +1656,8 @@ func (m *UserRepositoryMock) minimockDone() bool {
 		m.MinimockCreateDone() &&
 		m.MinimockDeleteDone() &&
 		m.MinimockGetDone() &&
+		m.MinimockGetAccessibleRolesDone() &&
+		m.MinimockGetHashPassDone() &&
+		m.MinimockGetRoleDone() &&
 		m.MinimockUpdateDone()
 }
