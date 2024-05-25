@@ -14,6 +14,7 @@ import (
 	"github.com/kirillmc/auth/internal/service"
 	serviceMocks "github.com/kirillmc/auth/internal/service/mocks"
 	desc "github.com/kirillmc/auth/pkg/user_v1"
+	"github.com/kirillmc/platform_common/pkg/nillable"
 	"github.com/stretchr/testify/require"
 )
 
@@ -50,12 +51,12 @@ func TestUpdate(t *testing.T) {
 
 		modelUserToUpdate = &model.UserToUpdate{
 			Id: id,
-			Username: &wrapperspb.StringValue{
+			Username: nillable.Create(&wrapperspb.StringValue{
 				Value: name,
-			},
-			Email: &wrapperspb.StringValue{
+			}),
+			Email: nillable.Create(&wrapperspb.StringValue{
 				Value: email,
-			},
+			}),
 			Role: model.Role(role),
 		}
 	)
