@@ -4,7 +4,7 @@ LOCAL_BIN:=$(CURDIR)/bin
 
 LOCAL_MIGRATION_DIR=$(MIGRATION_DIR)
 LOCAL_MIGRATION_DSN="host=localhost port=$(PG_PORT) dbname=$(PG_DATABASE_NAME) user=$(PG_USER) password=$(PG_PASSWORD) sslmode=disable"
-
+TLS_PATH=$(CURDIR)/tls
 install-golangci-lint:
 	GOBIN=$(LOCAL_BIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.53.3
 
@@ -20,14 +20,17 @@ install-deps:
 	GOBIN=$(LOCAL_BIN) go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.15.2
 	GOBIN=$(LOCAL_BIN) go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@v2.15.2
 	GOBIN=$(LOCAL_BIN) go install github.com/rakyll/statik@v0.1.7
+	GOBIN=$(LOCAL_BIN) go install github.com/bojand/ghz/cmd/ghz@v0.117.0
 
 get-deps:
 	go get -u google.golang.org/protobuf/cmd/protoc-gen-go
 	go get -u google.golang.org/grpc/cmd/protoc-gen-go-grpc
 	go get go.uber.org/zap/zapcore
 	go get github.com/grpc-ecosystem/go-grpc-middleware
-	go get "github.com/natefinch/lumberjack"
-
+	go get github.com/natefinch/lumberjack
+	go get github.com/prometheus/client_golang/prometheus
+	go get github.com/prometheus/client_golang/prometheus/promauto
+	go get -u github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc
 
 generate:
 	mkdir -p pkg/swagger
@@ -127,3 +130,27 @@ gen-cert:
 
 gen-secret-key:
 	openssl rand -hex 55
+
+grpc-load-test:
+	ghz \
+		--proto api/user_v1/user.proto \
+		--import-paths=vendor.protogen/ \
+		--call user_v1.UserV1.Get \
+		--data '{"id": 1}' \
+		--rps 100 \
+		--total 3001 \
+		--cacert=tls/service.pem \
+        --key=tls/service.key \
+		localhost:50051
+
+grpc-error-load-test:
+	ghz \
+		--proto api/user_v1/user.proto \
+        --import-paths=vendor.protogen/ \
+        --call user_v1.UserV1.Get \
+        --data '{"id": 0}' \
+       	--rps 100 \
+        --total 3001 \
+        --cacert=tls/service.pem \
+        --key=tls/service.key \
+      	localhost:50051

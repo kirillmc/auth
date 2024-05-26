@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"sync"
 
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -16,15 +17,20 @@ import (
 
 	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
 	"github.com/kirillmc/auth/internal/config"
 	localInterceptor "github.com/kirillmc/auth/internal/interceptor"
 	"github.com/kirillmc/auth/internal/logger"
+	"github.com/kirillmc/auth/internal/metric"
+	"github.com/kirillmc/auth/internal/tracing"
 	descAccess "github.com/kirillmc/auth/pkg/access_v1"
 	descAuth "github.com/kirillmc/auth/pkg/auth_v1"
 	descUser "github.com/kirillmc/auth/pkg/user_v1"
 	_ "github.com/kirillmc/auth/statik"
 	"github.com/kirillmc/platform_common/pkg/closer"
 	"github.com/kirillmc/platform_common/pkg/interceptor"
+	"github.com/opentracing/opentracing-go"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rakyll/statik/fs"
 	"github.com/rs/cors"
 )
@@ -32,6 +38,7 @@ import (
 const (
 	SERVICE_PEM = "tls/service.pem"
 	SERVICE_KEY = "tls/service.key"
+	serviceName = "auth-server-service"
 )
 
 var configPath string
@@ -43,10 +50,11 @@ func init() {
 // подвязываем инициализаторские штуки из service_provider к старту приложения
 
 type App struct {
-	serviceProvider *serviceProvider
-	grpcServer      *grpc.Server
-	httpServer      *http.Server
-	swaggerServer   *http.Server
+	serviceProvider  *serviceProvider
+	grpcServer       *grpc.Server
+	httpServer       *http.Server
+	swaggerServer    *http.Server
+	prometheusServer *http.Server
 }
 
 func NewApp(ctx context.Context) (*App, error) {
@@ -68,14 +76,14 @@ func (a *App) Run() error {
 	}()
 
 	wg := sync.WaitGroup{}
-	wg.Add(3)
+	wg.Add(4)
 
 	go func() {
 		defer wg.Done()
 
 		err := a.runGRPCServer()
 		if err != nil {
-			log.Fatalf("failed to run grpc server: %v", err)
+			logger.Fatal("failed to run gRPC server", zap.Error(err))
 		}
 	}()
 
@@ -84,7 +92,16 @@ func (a *App) Run() error {
 
 		err := a.runHTTPServer()
 		if err != nil {
-			log.Fatalf("failed to run http server: %v", err)
+			logger.Fatal("failed to run HTTP server", zap.Error(err))
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+
+		err := a.runPrometheusServer()
+		if err != nil {
+			logger.Fatal("failed to run Prometheus server", zap.Error(err))
 		}
 	}()
 
@@ -93,7 +110,7 @@ func (a *App) Run() error {
 
 		err := a.runSwaggerServer()
 		if err != nil {
-			log.Fatalf("failed to run swagger server: %v", err)
+			logger.Fatal("failed to run Swagger server", zap.Error(err))
 		}
 	}()
 
@@ -109,6 +126,7 @@ func (a *App) initDeps(ctx context.Context) error {
 		a.initLogger,
 		a.initGRPCServer,
 		a.initHTTPServer,
+		a.initPrometheusServer,
 		a.initSwaggerServer,
 	}
 
@@ -148,14 +166,18 @@ func (a *App) initLogger(_ context.Context) error {
 func (a *App) initGRPCServer(ctx context.Context) error {
 	creds, err := credentials.NewServerTLSFromFile(SERVICE_PEM, SERVICE_KEY)
 	if err != nil {
-		log.Fatalf("failed to load TLS keys: %v", err)
+		logger.Fatal("failed to load TLS keys", zap.Error(err))
 	}
+
+	tracing.Init(serviceName)
 
 	a.grpcServer = grpc.NewServer(
 		grpc.Creds(creds),
 		grpc.UnaryInterceptor(
 			grpcMiddleware.ChainUnaryServer(
 				localInterceptor.LogInterceptor,
+				localInterceptor.MetricsInterceptor,
+				otgrpc.OpenTracingServerInterceptor(opentracing.GlobalTracer()),
 				interceptor.ValidateInerceptor,
 			),
 		),
@@ -197,6 +219,23 @@ func (a *App) initHTTPServer(ctx context.Context) error {
 	return nil
 }
 
+func (a *App) initPrometheusServer(ctx context.Context) error {
+	err := metric.Init(ctx)
+	if err != nil {
+		logger.Fatal("failed to init metrics", zap.Any("error", err))
+	}
+
+	mux := http.NewServeMux()
+	mux.Handle("/metrics", promhttp.Handler())
+
+	a.prometheusServer = &http.Server{
+		Addr:    a.serviceProvider.PrometheusConfig().Address(),
+		Handler: mux,
+	}
+
+	return nil
+}
+
 func (a *App) initSwaggerServer(_ context.Context) error {
 	statikFs, err := fs.New()
 	if err != nil {
@@ -216,7 +255,7 @@ func (a *App) initSwaggerServer(_ context.Context) error {
 }
 
 func (a *App) runGRPCServer() error {
-	log.Printf("GRPC server is running on %s", a.serviceProvider.GRPCConfig().Address())
+	logger.Info("gRPC server is running on: ", zap.String("address", a.serviceProvider.GRPCConfig().Address()))
 
 	lis, err := net.Listen("tcp", a.serviceProvider.GRPCConfig().Address())
 	if err != nil {
@@ -232,7 +271,7 @@ func (a *App) runGRPCServer() error {
 }
 
 func (a *App) runHTTPServer() error {
-	log.Printf("HTTP server is running on %s", a.serviceProvider.HTTPConfig().Address())
+	logger.Info("HTTP server is running on: ", zap.String("address", a.serviceProvider.HTTPConfig().Address()))
 
 	err := a.httpServer.ListenAndServe()
 	if err != nil {
@@ -242,8 +281,19 @@ func (a *App) runHTTPServer() error {
 	return nil
 }
 
+func (a *App) runPrometheusServer() error {
+	logger.Info("Prometheus server is running on: ", zap.String("address", a.serviceProvider.PrometheusConfig().Address()))
+
+	err := a.prometheusServer.ListenAndServe()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (a *App) runSwaggerServer() error {
-	log.Printf("Swagger server is running on %s", a.serviceProvider.SwaggerConfig().Address())
+	logger.Info("Swagger server is running on: ", zap.String("address", a.serviceProvider.SwaggerConfig().Address()))
 
 	err := a.swaggerServer.ListenAndServe()
 	if err != nil {
@@ -255,15 +305,14 @@ func (a *App) runSwaggerServer() error {
 
 func serveSwaggerFile(path string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("Serving swagger: %s", path)
+		logger.Info("Serving swagger", zap.String("path", path))
 
 		statikFs, err := fs.New()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-
-		log.Printf("Opening swagger at %s", path)
+		logger.Info("Opening swagger at", zap.String("path", path))
 
 		file, err := statikFs.Open(path)
 		if err != nil {
@@ -281,7 +330,7 @@ func serveSwaggerFile(path string) http.HandlerFunc {
 			return
 		}
 
-		log.Printf("Write swagger file: %s", path)
+		logger.Info("Write swagger file", zap.String("path", path))
 
 		w.Header().Set("Content-Type", "application/json")
 		_, err = w.Write(content)
@@ -290,6 +339,6 @@ func serveSwaggerFile(path string) http.HandlerFunc {
 			return
 		}
 
-		log.Printf("Served swagger file: %s", path)
+		logger.Info("Served swagger file", zap.String("path", path))
 	}
 }
